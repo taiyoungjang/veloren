@@ -11,7 +11,7 @@ use kiddo::{distance::squared_euclidean, KdTree}; // For RRT paths (disabled for
 #[cfg(rrt_pathfinding)]
 use rand::distributions::Uniform;
 use rand::{thread_rng, Rng};
-#[cfg(rrt_pathfinding)] use std::f32::consts::PI;
+#[cfg(rrt_pathfinding)] use std::f64::consts::PI;
 use std::iter::FromIterator;
 use vek::*;
 
@@ -73,16 +73,16 @@ impl From<Path<Vec3<i32>>> for Route {
 
 pub struct TraversalConfig {
     /// The distance to a node at which node is considered visited.
-    pub node_tolerance: f32,
+    pub node_tolerance: f64,
     /// The slowdown factor when following corners.
     /// 0.0 = no slowdown on corners, 1.0 = total slowdown on corners.
-    pub slow_factor: f32,
+    pub slow_factor: f64,
     /// Whether the agent is currently on the ground.
     pub on_ground: bool,
     /// Whether the agent is currently in water.
     pub in_liquid: bool,
     /// The distance to the target below which it is considered reached.
-    pub min_tgt_dist: f32,
+    pub min_tgt_dist: f64,
     /// Whether the agent can climb.
     pub can_climb: bool,
     /// Whether the agent can fly.
@@ -112,10 +112,10 @@ impl Route {
     pub fn traverse<V>(
         &mut self,
         vol: &V,
-        pos: Vec3<f32>,
-        vel: Vec3<f32>,
+        pos: Vec3<f64>,
+        vel: Vec3<f64>,
         traversal_cfg: &TraversalConfig,
-    ) -> Option<(Vec3<f32>, f32)>
+    ) -> Option<(Vec3<f64>, f64)>
     where
         V: BaseVol<Vox = Block> + ReadVol,
     {
@@ -138,7 +138,7 @@ impl Route {
             });
 
             // Map position of node to middle of block
-            let next_tgt = next0.map(|e| e as f32) + Vec3::new(0.5, 0.5, 0.0);
+            let next_tgt = next0.map(|e| e as f64) + Vec3::new(0.5, 0.5, 0.0);
             let closest_tgt = next_tgt.map2(pos, |tgt, pos| pos.clamped(tgt.floor(), tgt.ceil()));
             // Determine whether we're close enough to the next to to consider it completed
             let dist_sqrd = pos.xy().distance_squared(closest_tgt.xy());
@@ -167,12 +167,12 @@ impl Route {
             }
         };
 
-        fn gradient(line: LineSegment2<f32>) -> f32 {
+        fn gradient(line: LineSegment2<f64>) -> f64 {
             let r = (line.start.y - line.end.y) / (line.start.x - line.end.x);
             if r.is_nan() { 100000.0 } else { r }
         }
 
-        fn intersect(a: LineSegment2<f32>, b: LineSegment2<f32>) -> Option<Vec2<f32>> {
+        fn intersect(a: LineSegment2<f64>, b: LineSegment2<f64>) -> Option<Vec2<f64>> {
             let ma = gradient(a);
             let mb = gradient(b);
 
@@ -213,33 +213,33 @@ impl Route {
             end: pos.xy() + vel.xy() * 100.0,
         };
 
-        let align = |block_pos: Vec3<i32>, precision: f32| {
+        let align = |block_pos: Vec3<i32>, precision: f64| {
             let lerp_block =
-                |x, precision| Lerp::lerp(x, block_pos.xy().map(|e| e as f32), precision);
+                |x, precision| Lerp::lerp(x, block_pos.xy().map(|e| e as f64), precision);
 
             (0..4)
                 .filter_map(|i| {
                     let edge_line = LineSegment2 {
                         start: lerp_block(
-                            (block_pos.xy() + corners[i]).map(|e| e as f32),
+                            (block_pos.xy() + corners[i]).map(|e| e as f64),
                             precision,
                         ),
                         end: lerp_block(
-                            (block_pos.xy() + corners[i + 1]).map(|e| e as f32),
+                            (block_pos.xy() + corners[i + 1]).map(|e| e as f64),
                             precision,
                         ),
                     };
                     intersect(vel_line, edge_line).filter(|intersect| {
                         intersect
                             .clamped(
-                                block_pos.xy().map(|e| e as f32),
-                                block_pos.xy().map(|e| e as f32 + 1.0),
+                                block_pos.xy().map(|e| e as f64),
+                                block_pos.xy().map(|e| e as f64 + 1.0),
                             )
                             .distance_squared(*intersect)
                             < 0.001
                     })
                 })
-                .min_by_key(|intersect: &Vec2<f32>| {
+                .min_by_key(|intersect: &Vec2<f64>| {
                     (intersect.distance_squared(vel_line.end) * 1000.0) as i32
                 })
                 .unwrap_or_else(|| {
@@ -247,12 +247,12 @@ impl Route {
                         .flat_map(|i| (0..2).map(move |j| Vec2::new(i, j)))
                         .map(|rpos| block_pos + rpos)
                         .map(|block_pos| {
-                            let block_posf = block_pos.xy().map(|e| e as f32);
+                            let block_posf = block_pos.xy().map(|e| e as f64);
                             let proj = vel_line.projected_point(block_posf);
                             let clamped = lerp_block(
                                 proj.clamped(
-                                    block_pos.xy().map(|e| e as f32),
-                                    block_pos.xy().map(|e| e as f32),
+                                    block_pos.xy().map(|e| e as f64),
+                                    block_pos.xy().map(|e| e as f64),
                                 ),
                                 precision,
                             );
@@ -290,7 +290,7 @@ impl Route {
             ctrl0: pos.xy() + vel.xy().try_normalized().unwrap_or_default() * 1.0,
             ctrl1: align(
                 next0,
-                (1.0 - if (next0.z as f32 - pos.z).abs() < 0.25 && !be_precise {
+                (1.0 - if (next0.z as f64 - pos.z).abs() < 0.25 && !be_precise {
                     straight_factor
                 } else {
                     0.0
@@ -300,7 +300,7 @@ impl Route {
             end: align(next1, 1.0),
         };
 
-        let tgt2d = bez.evaluate(if (next0.z as f32 - pos.z).abs() < 0.25 {
+        let tgt2d = bez.evaluate(if (next0.z as f64 - pos.z).abs() < 0.25 {
             0.25
         } else {
             0.5
@@ -326,7 +326,7 @@ impl Route {
 /// performing pathfinding if necessary
 #[derive(Default, Clone, Debug)]
 pub struct Chaser {
-    last_search_tgt: Option<Vec3<f32>>,
+    last_search_tgt: Option<Vec3<f64>>,
     /// `bool` indicates whether the Route is a complete route to the target
     route: Option<(Route, bool)>,
     /// We use this hasher (AAHasher) because:
@@ -338,16 +338,16 @@ pub struct Chaser {
 
 impl Chaser {
     /// Returns bearing and speed
-    /// Bearing is a Vec3<f32> dictating the direction of movement
-    /// Speed is an f32 between 0.0 and 1.0
+    /// Bearing is a Vec3<f64> dictating the direction of movement
+    /// Speed is an f64 between 0.0 and 1.0
     pub fn chase<V>(
         &mut self,
         vol: &V,
-        pos: Vec3<f32>,
-        vel: Vec3<f32>,
-        tgt: Vec3<f32>,
+        pos: Vec3<f64>,
+        vel: Vec3<f64>,
+        tgt: Vec3<f64>,
         traversal_cfg: TraversalConfig,
-    ) -> Option<(Vec3<f32>, f32)>
+    ) -> Option<(Vec3<f64>, f64)>
     where
         V: BaseVol<Vox = Block> + ReadVol,
     {
@@ -359,7 +359,7 @@ impl Chaser {
             .route
             .as_ref()
             .and_then(|(r, _)| r.path.end().copied())
-            .map(|e| e.map(|e| e as f32 + 0.5))
+            .map(|e| e.map(|e| e as f64 + 0.5))
             .unwrap_or(tgt);
         if ((pos - end) * Vec3::new(1.0, 1.0, 2.0)).magnitude_squared()
             < traversal_cfg.min_tgt_dist.powi(2)
@@ -373,7 +373,7 @@ impl Chaser {
             .as_ref()
             .and_then(|(r, complete)| Some((r.path().end().copied()?, *complete)))
         {
-            let end_to_tgt = end.map(|e| e as f32).distance(tgt);
+            let end_to_tgt = end.map(|e| e as f64).distance(tgt);
             // If the target has moved significantly since the path was generated then it's
             // time to search for a new path. Also, do this randomly from time
             // to time to avoid any edge cases that cause us to get stuck. In
@@ -382,7 +382,7 @@ impl Chaser {
             // our day. TODO: Come up with a better heuristic for this
             if end_to_tgt > pos_to_tgt * 0.3 + 5.0 && complete {
                 None
-            } else if thread_rng().gen::<f32>() < 0.001 {
+            } else if thread_rng().gen::<f64>() < 0.001 {
                 self.route = None;
                 None
             } else {
@@ -428,7 +428,7 @@ impl Chaser {
                         .iter()
                         .enumerate()
                         .min_by_key(|(_, node)| {
-                            node.map(|e| e as f32).distance_squared(pos + tgt_dir) as i32
+                            node.map(|e| e as f64).distance_squared(pos + tgt_dir) as i32
                         })
                         .map(|(idx, _)| idx);
 
@@ -455,7 +455,7 @@ impl Chaser {
                 // towards the target if falling is not a danger
                 let walking_towards_edge = (-3..2).all(|z| {
                     vol.get(
-                        (pos + Vec3::<f32>::from(tgt_dir) * 2.5).map(|e| e as i32)
+                        (pos + Vec3::<f64>::from(tgt_dir) * 2.5).map(|e| e as i32)
                             + Vec3::unit_z() * z,
                     )
                     .map(|b| b.is_air())
@@ -506,8 +506,8 @@ where
 fn find_path<V>(
     astar: &mut Option<Astar<Vec3<i32>, DefaultHashBuilder>>,
     vol: &V,
-    startf: Vec3<f32>,
-    endf: Vec3<f32>,
+    startf: Vec3<f64>,
+    endf: Vec3<f64>,
     traversal_cfg: &TraversalConfig,
 ) -> (Option<Path<Vec3<i32>>>, bool)
 where
@@ -534,7 +534,7 @@ where
         _ => return (None, false),
     };
 
-    let heuristic = |pos: &Vec3<i32>| (pos.distance_squared(end) as f32).sqrt();
+    let heuristic = |pos: &Vec3<i32>| (pos.distance_squared(end) as f64).sqrt();
     let neighbors = |pos: &Vec3<i32>| {
         let pos = *pos;
         const DIRS: [Vec3<i32>; 17] = [
@@ -633,8 +633,8 @@ where
 
         // Modify the heuristic a little in order to prefer paths that take us on a
         // straight line toward our target. This means we get smoother movement.
-        1.0 + crow_line.distance_to_point(b.xy().map(|e| e as f32)) * 0.025
-            + (b.z - a.z - 1).max(0) as f32 * 10.0
+        1.0 + crow_line.distance_to_point(b.xy().map(|e| e as f64)) * 0.025
+            + (b.z - a.z - 1).max(0) as f64 * 10.0
     };
     let satisfied = |pos: &Vec3<i32>| pos == &end;
 
@@ -668,8 +668,8 @@ where
 #[cfg(rrt_pathfinding)]
 fn find_air_path<V>(
     vol: &V,
-    startf: Vec3<f32>,
-    endf: Vec3<f32>,
+    startf: Vec3<f64>,
+    endf: Vec3<f64>,
     traversal_cfg: &TraversalConfig,
 ) -> (Option<Path<Vec3<i32>>>, bool)
 where
@@ -693,7 +693,7 @@ where
         (Some(path.into_iter().collect()), connect)
     // Else use RRTs
     } else {
-        let is_traversable = |start: &Vec3<f32>, end: &Vec3<f32>| {
+        let is_traversable = |start: &Vec3<f64>, end: &Vec3<f64>| {
             vol.ray(*start, *end)
                 .until(Block::is_solid)
                 .cast()
@@ -719,9 +719,9 @@ where
 /// Returns a path and whether that path is complete or not.
 #[cfg(rrt_pathfinding)]
 fn informed_rrt_connect(
-    start: Vec3<f32>,
-    end: Vec3<f32>,
-    is_valid_edge: impl Fn(&Vec3<f32>, &Vec3<f32>) -> bool,
+    start: Vec3<f64>,
+    end: Vec3<f64>,
+    is_valid_edge: impl Fn(&Vec3<f64>, &Vec3<f64>) -> bool,
 ) -> (Option<Path<Vec3<i32>>>, bool) {
     let mut path = Vec::new();
 
@@ -913,8 +913,8 @@ fn informed_rrt_connect(
             node_idx + 4
         };
         let next_node = path[next_idx];
-        let start_pos = node.map(|e| e as f32 + 0.5);
-        let end_pos = next_node.map(|e| e as f32 + 0.5);
+        let start_pos = node.map(|e| e as f64 + 0.5);
+        let end_pos = next_node.map(|e| e as f64 + 0.5);
         if vol
             .ray(start_pos, end_pos)
             .until(Block::is_solid)
@@ -945,10 +945,10 @@ fn informed_rrt_connect(
 /// search_parameter should be increased linearly as the search continues.
 #[cfg(rrt_pathfinding)]
 pub fn point_on_prolate_spheroid(
-    focus1: Vec3<f32>,
-    focus2: Vec3<f32>,
-    search_parameter: f32,
-) -> Vec3<f32> {
+    focus1: Vec3<f64>,
+    focus2: Vec3<f64>,
+    search_parameter: f64,
+) -> Vec3<f64> {
     let mut rng = thread_rng();
     // Uniform distribution
     let range = Uniform::from(0.0..1.0);
@@ -956,11 +956,11 @@ pub fn point_on_prolate_spheroid(
     // Midpoint is used as the local origin
     let midpoint = 0.5 * (focus1 + focus2);
     // Radius between the start and end of the path
-    let radius: f32 = focus1.distance(focus2);
+    let radius: f64 = focus1.distance(focus2);
     // The linear eccentricity of an ellipse is the distance from the origin to a
     // focus A prolate spheroid is a half-ellipse rotated for a full revolution
     // which is why ellipse variables are used frequently in this function
-    let linear_eccentricity: f32 = 0.5 * radius;
+    let linear_eccentricity: f64 = 0.5 * radius;
 
     // For an ellipsoid, three variables determine the shape: a, b, and c.
     // These are the distance from the center/origin to the surface on the
@@ -968,12 +968,12 @@ pub fn point_on_prolate_spheroid(
     // For a prolate spheroid a and b are equal.
     // c is determined by adding the search parameter to the linear eccentricity.
     // As the search parameter increases the size of the spheroid increases
-    let c: f32 = linear_eccentricity + search_parameter;
+    let c: f64 = linear_eccentricity + search_parameter;
     // The width is calculated to prioritize increasing width over length of
     // the ellipsoid
-    let a: f32 = (c.powi(2) - linear_eccentricity.powi(2)).powf(0.5);
+    let a: f64 = (c.powi(2) - linear_eccentricity.powi(2)).powf(0.5);
     // The width should be the same in both the x and y directions
-    let b: f32 = a;
+    let b: f64 = a;
 
     // The parametric spherical equation for an ellipsoid measuring from the
     // center point is as follows:
@@ -986,8 +986,8 @@ pub fn point_on_prolate_spheroid(
     //
     // Select these two angles using the uniform distribution defined at the
     // beginning of the function from 0.0 to 1.0
-    let rtheta: f32 = PI * range.sample(&mut rng) - 0.5 * PI;
-    let lambda: f32 = 2.0 * PI * range.sample(&mut rng);
+    let rtheta: f64 = PI * range.sample(&mut rng) - 0.5 * PI;
+    let lambda: f64 = 2.0 * PI * range.sample(&mut rng);
     // Select a point on the surface of the ellipsoid
     let point = Vec3::new(
         a * rtheta.cos() * lambda.cos(),
@@ -1028,7 +1028,7 @@ pub fn point_on_prolate_spheroid(
     // phi.cos(), 0.0, 0.0, 0.0, 1.0);
 
     // Rotate about perpendicular vector in the xy plane by theta
-    let theta: f32 = if radius > 0.0 {
+    let theta: f64 = if radius > 0.0 {
         (dz / radius).acos()
     } else {
         0.0

@@ -76,7 +76,7 @@ impl EguiState {
                     EguiDebugShapeAction::AddCylinder { height, radius } => {
                         let shape_id = scene
                             .debug
-                            .add_shape(DebugShape::Cylinder { height, radius });
+                            .add_shape(DebugShape::Cylinder { height: height as f32, radius: radius as f32 });
                         self.new_debug_shape_id = Some(shape_id.0);
                     },
                     EguiDebugShapeAction::RemoveShape(debug_shape_id) => {

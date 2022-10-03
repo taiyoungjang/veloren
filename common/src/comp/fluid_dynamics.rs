@@ -6,7 +6,7 @@ use crate::{
     util::{Dir, Plane, Projection},
 };
 use serde::{Deserialize, Serialize};
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use vek::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,12 +36,12 @@ impl LiquidKind {
 pub enum Fluid {
     Air {
         vel: Vel,
-        elevation: f32,
+        elevation: f64,
     },
     Liquid {
         kind: LiquidKind,
         vel: Vel,
-        depth: f32,
+        depth: f64,
     },
 }
 
@@ -62,7 +62,7 @@ impl Fluid {
     }
 
     /// Pressure from entity velocity
-    pub fn dynamic_pressure(&self, vel: &Vel) -> f32 {
+    pub fn dynamic_pressure(&self, vel: &Vel) -> f64 {
         0.5 * self.density().0 * self.relative_flow(vel).0.magnitude_squared()
     }
 
@@ -98,14 +98,14 @@ impl Fluid {
 
     pub fn is_liquid(&self) -> bool { matches!(self, Fluid::Liquid { .. }) }
 
-    pub fn elevation(&self) -> Option<f32> {
+    pub fn elevation(&self) -> Option<f64> {
         match self {
             Fluid::Air { elevation, .. } => Some(*elevation),
             _ => None,
         }
     }
 
-    pub fn depth(&self) -> Option<f32> {
+    pub fn depth(&self) -> Option<f64> {
         match self {
             Fluid::Liquid { depth, .. } => Some(*depth),
             _ => None,
@@ -123,8 +123,8 @@ impl Default for Fluid {
 }
 
 pub struct Wings {
-    pub aspect_ratio: f32,
-    pub planform_area: f32,
+    pub aspect_ratio: f64,
+    pub planform_area: f64,
     pub ori: Ori,
 }
 
@@ -133,9 +133,9 @@ impl Body {
     pub fn aerodynamic_forces(
         &self,
         rel_flow: &Vel,
-        fluid_density: f32,
+        fluid_density: f64,
         wings: Option<&Wings>,
-    ) -> Vec3<f32> {
+    ) -> Vec3<f64> {
         let v_sq = rel_flow.0.magnitude_squared();
         if v_sq < 0.25 {
             // don't bother with minuscule forces
@@ -214,14 +214,14 @@ impl Body {
     /// Skin friction is the drag arising from the shear forces between a fluid
     /// and a surface, while pressure drag is due to flow separation. Both are
     /// viscous effects.
-    fn parasite_drag(&self) -> f32 {
+    fn parasite_drag(&self) -> f64 {
         // Reference area and drag coefficient assumes best-case scenario of the
         // orientation producing least amount of drag
         match self {
             // Cross-section, head/feet first
             Body::BipedLarge(_) | Body::BipedSmall(_) | Body::Golem(_) | Body::Humanoid(_) => {
                 let dim = self.dimensions().xy().map(|a| a * 0.5);
-                const CD: f32 = 0.7;
+                const CD: f64 = 0.7;
                 CD * PI * dim.x * dim.y
             },
 
@@ -232,7 +232,7 @@ impl Body {
             | Body::QuadrupedLow(_)
             | Body::Arthropod(_) => {
                 let dim = self.dimensions().map(|a| a * 0.5);
-                let cd: f32 = if matches!(self, Body::QuadrupedLow(_)) {
+                let cd: f64 = if matches!(self, Body::QuadrupedLow(_)) {
                     0.7
                 } else {
                     1.0
@@ -243,7 +243,7 @@ impl Body {
             // Cross-section, zero-lift angle; exclude the wings (width * 0.2)
             Body::BirdMedium(_) | Body::BirdLarge(_) | Body::Dragon(_) => {
                 let dim = self.dimensions().map(|a| a * 0.5);
-                let cd: f32 = match self {
+                let cd: f64 = match self {
                     // "Field Estimates of Body Drag Coefficient
                     // on the Basis of Dives in Passerine Birds",
                     // Anders Hedenström and Felix Liechti, 2001
@@ -259,7 +259,7 @@ impl Body {
                 let dim = self.dimensions().map(|a| a * 0.5);
                 // "A Simple Method to Determine Drag Coefficients in Aquatic Animals",
                 // D. Bilo and W. Nachtigall, 1980
-                const CD: f32 = 0.031;
+                const CD: f64 = 0.031;
                 CD * PI * dim.x * 0.2 * dim.z
             },
 
@@ -277,7 +277,7 @@ impl Body {
                 | object::Body::MultiArrow
                 | object::Body::Dart => {
                     let dim = self.dimensions().map(|a| a * 0.5);
-                    const CD: f32 = 0.02;
+                    const CD: f64 = 0.02;
                     CD * PI * dim.x * dim.z
                 },
 
@@ -296,20 +296,20 @@ impl Body {
                 | object::Body::Pumpkin4
                 | object::Body::Pumpkin5 => {
                     let dim = self.dimensions().map(|a| a * 0.5);
-                    const CD: f32 = 0.5;
+                    const CD: f64 = 0.5;
                     CD * PI * dim.x * dim.z
                 },
 
                 _ => {
                     let dim = self.dimensions();
-                    const CD: f32 = 2.0;
+                    const CD: f64 = 2.0;
                     CD * (PI / 6.0 * dim.x * dim.y * dim.z).powf(2.0 / 3.0)
                 },
             },
 
             Body::ItemDrop(_) => {
                 let dim = self.dimensions();
-                const CD: f32 = 2.0;
+                const CD: f64 = 2.0;
                 CD * (PI / 6.0 * dim.x * dim.y * dim.z).powf(2.0 / 3.0)
             },
 
@@ -329,7 +329,7 @@ impl Body {
 /// This ignores spanwise flow (i.e. we remove the spanwise flow component).
 /// With greater yaw comes greater loss of accuracy as more flow goes
 /// unaccounted for.
-pub fn angle_of_attack(ori: &Ori, rel_flow_dir: &Dir) -> f32 {
+pub fn angle_of_attack(ori: &Ori, rel_flow_dir: &Dir) -> f64 {
     rel_flow_dir
         .projected(&Plane::from(ori.right()))
         .map(|flow_dir| PI / 2.0 - ori.up().angle_between(flow_dir.to_vec()))
@@ -338,7 +338,7 @@ pub fn angle_of_attack(ori: &Ori, rel_flow_dir: &Dir) -> f32 {
 
 /// Total lift coefficient for a finite wing of symmetric aerofoil shape and
 /// elliptical pressure distribution.
-pub fn lift_coefficient(aspect_ratio: f32, aoa: f32) -> f32 {
+pub fn lift_coefficient(aspect_ratio: f64, aoa: f64) -> f64 {
     let aoa_abs = aoa.abs();
     let stall_angle = PI * 0.1;
     if aoa_abs < stall_angle {
@@ -363,7 +363,7 @@ pub fn lift_coefficient(aspect_ratio: f32, aoa: f32) -> f32 {
 
 /// The zero-lift profile drag coefficient is the parasite drag on the wings
 /// at the angle of attack which generates no lift
-pub fn zero_lift_drag_coefficient() -> f32 { 0.026 }
+pub fn zero_lift_drag_coefficient() -> f64 { 0.026 }
 
 /// The change in lift over change in angle of attack¹. Multiplying by angle
 /// of attack gives the lift coefficient (for a finite wing, not aerofoil).
@@ -382,7 +382,7 @@ pub fn zero_lift_drag_coefficient() -> f32 { 0.026 }
 /// 3. effective aoa, i.e. geometric aoa - induced aoa; assumes
 /// no sideslip
 // TODO: Look into handling tapered wings
-fn lift_slope(aspect_ratio: f32, sweep_angle: Option<f32>) -> f32 {
+fn lift_slope(aspect_ratio: f64, sweep_angle: Option<f64>) -> f64 {
     // lift slope for a thin aerofoil, given by Thin Aerofoil Theory
     let a0 = 2.0 * PI;
     if let Some(sweep) = sweep_angle {

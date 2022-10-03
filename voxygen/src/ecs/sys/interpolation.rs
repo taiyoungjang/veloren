@@ -45,9 +45,9 @@ impl<'a> System<'a> for Sys {
                 // Note, these values are specifically tuned for smoother motion with high
                 // network latency or low network sampling rate and for smooth
                 // block hopping (which is instantaneous)
-                const POS_LERP_RATE_FACTOR: f32 = 10.0;
-                i.pos = Lerp::lerp(i.pos, pos.0 + vel.0 * 0.03, POS_LERP_RATE_FACTOR * dt.0);
-                i.ori = Ori::slerp(i.ori, *ori, base_ori_interp(body) * dt.0);
+                const POS_LERP_RATE_FACTOR: f64 = 10.0;
+                i.pos = Lerp::lerp(i.pos, pos.0 + vel.0 * 0.03, POS_LERP_RATE_FACTOR * dt.0 as f64);
+                i.ori = Ori::slerp(i.ori, *ori, base_ori_interp(body) * dt.0 as f64);
             } else {
                 i.pos = pos.0;
                 i.ori = *ori;
@@ -90,7 +90,7 @@ impl<'a> System<'a> for Sys {
     }
 }
 
-fn base_ori_interp(body: &Body) -> f32 {
+fn base_ori_interp(body: &Body) -> f64 {
     match body {
         Body::Object(object) => match object {
             object::Body::Crossbow | object::Body::HaniwaSentry => 100.0,

@@ -56,7 +56,7 @@ pub enum OutputFormula {
     OnCollide { value: f32 },
     /// Returns `value` if an entity died in the last tick within `radius` of
     /// the wiring element.
-    OnDeath { value: f32, radius: f32 },
+    OnDeath { value: f32, radius: f64 },
 
     // TODO: The following `OutputFormula`s are unimplemented!!!!
     /// Returns an oscillating value based on the sine wave with `amplitude` and

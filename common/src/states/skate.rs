@@ -57,7 +57,7 @@ impl CharacterBehavior for Data {
                         data.sidewalk = 0.0;
                     }
                     // forward, max at 8u/s
-                    (data.dt.0 * 3.0)
+                    (data.dt.0 as f64 * 3.0)
                         .min(8.0 - current_planar_velocity)
                         .max(0.0)
                 } else {
@@ -66,18 +66,18 @@ impl CharacterBehavior for Data {
                         data.sidewalk = 0.0;
                     }
                     //brake up to 4u/s², but never backwards
-                    (data.dt.0 * 4.0).min(current_planar_velocity)
+                    (data.dt.0 as f64 * 4.0).min(current_planar_velocity)
                 }
             } else {
                 if let CharacterState::Skate(data) = &mut update.character {
                     data.accelerate = 0.0;
-                    data.sidewalk = lat_input;
+                    data.sidewalk = lat_input as f32;
                 }
                 // sideways: constant speed
                 (0.5 - current_planar_velocity).max(0.0)
             };
             if let CharacterState::Skate(skate_data) = &mut update.character {
-                skate_data.turn = orthogonal.dot(data.vel.0.xy());
+                skate_data.turn = orthogonal.dot(data.vel.0.xy()) as f32;
             }
             let delta_vel = acceleration * data.inputs.move_dir;
             update.vel.0 += vek::Vec3::new(delta_vel.x, delta_vel.y, 0.0);

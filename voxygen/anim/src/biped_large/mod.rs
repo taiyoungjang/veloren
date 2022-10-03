@@ -539,7 +539,7 @@ impl<'a> From<&'a Body> for SkeletonAttr {
             },
             beast: matches!((body.species, body.body_type), (Werewolf, _)),
             float: matches!((body.species, body.body_type), (Mindflayer, _)),
-            height: comp::Body::BipedLarge(*body).dimensions().z,
+            height: comp::Body::BipedLarge(*body).dimensions().z as f32,
         }
     }
 }

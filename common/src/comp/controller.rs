@@ -175,7 +175,7 @@ pub enum ControlAction {
         input: InputKind,
         target_entity: Option<Uid>,
         // Some inputs need a selected position, such as mining
-        select_pos: Option<Vec3<f32>>,
+        select_pos: Option<Vec3<f64>>,
     },
     CancelInput(InputKind),
 }
@@ -226,7 +226,7 @@ impl From<InputKind> for Option<ability::AbilityInput> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InputAttr {
-    pub select_pos: Option<Vec3<f32>>,
+    pub select_pos: Option<Vec3<f64>>,
     pub target_entity: Option<Uid>,
 }
 
@@ -240,11 +240,11 @@ pub enum Climb {
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ControllerInputs {
     pub climb: Option<Climb>,
-    pub move_dir: Vec2<f32>,
-    pub move_z: f32, /* z axis (not combined with move_dir because they may have independent
+    pub move_dir: Vec2<f64>,
+    pub move_z: f64, /* z axis (not combined with move_dir because they may have independent
                       * limits) */
     pub look_dir: Dir,
-    pub break_block_pos: Option<Vec3<f32>>,
+    pub break_block_pos: Option<Vec3<f64>>,
     /// Attempt to enable strafing.
     /// Currently, setting this to false will *not* disable strafing during a
     /// wielding character state.

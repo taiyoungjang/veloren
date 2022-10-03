@@ -62,7 +62,7 @@ impl Body {
         }
     }
 
-    pub fn dimensions(&self) -> Vec3<f32> {
+    pub fn dimensions(&self) -> Vec3<f64> {
         match self {
             Body::DefaultAirship | Body::Volume => Vec3::new(25.0, 50.0, 40.0),
             Body::AirBalloon => Vec3::new(25.0, 50.0, 40.0),
@@ -71,11 +71,11 @@ impl Body {
         }
     }
 
-    fn balloon_vol(&self) -> f32 {
+    fn balloon_vol(&self) -> f64 {
         match self {
             Body::DefaultAirship | Body::AirBalloon | Body::Volume => {
-                let spheroid_vol = |equat_d: f32, polar_d: f32| -> f32 {
-                    (std::f32::consts::PI / 6.0) * equat_d.powi(2) * polar_d
+                let spheroid_vol = |equat_d: f64, polar_d: f64| -> f64 {
+                    (std::f64::consts::PI / 6.0) * equat_d.powi(2) * polar_d
                 };
                 let dim = self.dimensions();
                 spheroid_vol(dim.z, dim.y)
@@ -84,15 +84,15 @@ impl Body {
         }
     }
 
-    fn hull_vol(&self) -> f32 {
+    fn hull_vol(&self) -> f64 {
         // height from bottom of keel to deck
-        let deck_height = 10_f32;
+        let deck_height = 10_f64;
         let dim = self.dimensions();
-        (std::f32::consts::PI / 6.0) * (deck_height * 1.5).powi(2) * dim.y
+        (std::f64::consts::PI / 6.0) * (deck_height * 1.5).powi(2) * dim.y
     }
 
     pub fn hull_density(&self) -> Density {
-        let oak_density = 600_f32;
+        let oak_density = 600_f64;
         let ratio = 0.1;
         Density(ratio * oak_density + (1.0 - ratio) * AIR_DENSITY)
     }
@@ -136,7 +136,7 @@ impl Body {
 
 /// Terrain is 11.0 scale relative to small-scale voxels,
 /// airship scale is multiplied by 11 to reach terrain scale.
-pub const AIRSHIP_SCALE: f32 = 11.0;
+pub const AIRSHIP_SCALE: f64 = 11.0;
 
 /// Duplicate of some of the things defined in `voxygen::scene::figure::load` to
 /// avoid having to refactor all of that to `common` for using voxels as
@@ -187,7 +187,7 @@ pub mod figuredata {
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct VoxelCollider {
         pub(super) dyna: Dyna<Block, (), ColumnAccess>,
-        pub translation: Vec3<f32>,
+        pub translation: Vec3<f64>,
         /// This value should be incremented every time the volume is mutated
         /// and can be used to keep track of volume changes.
         pub mut_count: usize,
@@ -197,7 +197,7 @@ pub mod figuredata {
         pub fn from_fn<F: FnMut(Vec3<i32>) -> Block>(sz: Vec3<u32>, f: F) -> Self {
             Self {
                 dyna: Dyna::from_fn(sz, (), f),
-                translation: -sz.map(|e| e as f32) / 2.0,
+                translation: -sz.map(|e| e as f64) / 2.0,
                 mut_count: 0,
             }
         }
@@ -227,7 +227,7 @@ pub mod figuredata {
                     });
                     let collider = VoxelCollider {
                         dyna,
-                        translation: Vec3::from(bone.offset) + Vec3::from(bone.phys_offset),
+                        translation: Vec3::from(bone.offset).map(|x:f32|x as f64) + Vec3::from(bone.phys_offset).map(|x:f32| x as f64),
                         mut_count: 0,
                     };
                     colliders.insert(bone.central.0.clone(), collider);

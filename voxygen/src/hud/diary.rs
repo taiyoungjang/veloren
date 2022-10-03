@@ -3000,7 +3000,7 @@ fn hammer_skill_strings(skill: HammerSkill) -> SkillStrings<'static> {
     let modifiers = SKILL_MODIFIERS.hammer_tree;
     // Single strike upgrades
     match skill {
-        HammerSkill::SsKnockback => SkillStrings::with_mult(
+        HammerSkill::SsKnockback => SkillStrings::with_mult_double(
             "hud-skill-hmr_single_strike_knockback_title",
             "hud-skill-hmr_single_strike_knockback",
             modifiers.single_strike.knockback,
@@ -3023,7 +3023,7 @@ fn hammer_skill_strings(skill: HammerSkill) -> SkillStrings<'static> {
             "hud-skill-hmr_charged_melee_damage",
             modifiers.charged.scaled_damage,
         ),
-        HammerSkill::CKnockback => SkillStrings::with_mult(
+        HammerSkill::CKnockback => SkillStrings::with_mult_double(
             "hud-skill-hmr_charged_melee_knockback_title",
             "hud-skill-hmr_charged_melee_knockback",
             modifiers.charged.scaled_knockback,
@@ -3058,12 +3058,12 @@ fn hammer_skill_strings(skill: HammerSkill) -> SkillStrings<'static> {
             "hud-skill-hmr_leap_distance",
             modifiers.leap.leap_strength,
         ),
-        HammerSkill::LKnockback => SkillStrings::with_mult(
+        HammerSkill::LKnockback => SkillStrings::with_mult_double(
             "hud-skill-hmr_leap_knockback_title",
             "hud-skill-hmr_leap_knockback",
             modifiers.leap.knockback,
         ),
-        HammerSkill::LRange => SkillStrings::with_const_float(
+        HammerSkill::LRange => SkillStrings::with_const_double(
             "hud-skill-hmr_leap_radius_title",
             "hud-skill-hmr_leap_radius",
             modifiers.leap.range,
@@ -3091,7 +3091,7 @@ fn bow_skill_strings(skill: BowSkill) -> SkillStrings<'static> {
             "hud-skill-bow_charged_energy_regen",
             modifiers.charged.regen_scaling,
         ),
-        BowSkill::CKnockback => SkillStrings::with_mult(
+        BowSkill::CKnockback => SkillStrings::with_mult_double(
             "hud-skill-bow_charged_knockback_title",
             "hud-skill-bow_charged_knockback",
             modifiers.charged.knockback_scaling,
@@ -3164,7 +3164,7 @@ fn staff_skill_strings(skill: StaffSkill) -> SkillStrings<'static> {
             "hud-skill-st_energy_regen",
             modifiers.fireball.regen,
         ),
-        StaffSkill::BRadius => SkillStrings::with_mult(
+        StaffSkill::BRadius => SkillStrings::with_mult_double(
             "hud-skill-st_explosion_radius_title",
             "hud-skill-st_explosion_radius",
             modifiers.fireball.range,
@@ -3200,7 +3200,7 @@ fn staff_skill_strings(skill: StaffSkill) -> SkillStrings<'static> {
             "hud-skill-st_shockwave_damage",
             modifiers.shockwave.damage,
         ),
-        StaffSkill::SKnockback => SkillStrings::with_mult(
+        StaffSkill::SKnockback => SkillStrings::with_mult_double(
             "hud-skill-st_shockwave_knockback_title",
             "hud-skill-st_shockwave_knockback",
             modifiers.shockwave.knockback,
@@ -3377,10 +3377,20 @@ enum SkillStrings<'a> {
         desc: &'a str,
         constant: f32,
     },
+    WithConstDouble {
+        title: &'a str,
+        desc: &'a str,
+        constant: f64,
+    },
     WithMult {
         title: &'a str,
         desc: &'a str,
         multiplier: f32,
+    },
+    WithMultDouble {
+        title: &'a str,
+        desc: &'a str,
+        multiplier: f64,
     },
     Empty,
 }
@@ -3395,7 +3405,7 @@ impl<'a> SkillStrings<'a> {
             constant,
         }
     }
-
+    #[allow(dead_code)]
     fn with_const_float(title: &'a str, desc: &'a str, constant: f32) -> Self {
         Self::WithConstFloat {
             title,
@@ -3403,7 +3413,13 @@ impl<'a> SkillStrings<'a> {
             constant,
         }
     }
-
+    fn with_const_double(title: &'a str, desc: &'a str, constant: f64) -> Self {
+        Self::WithConstDouble {
+            title,
+            desc,
+            constant,
+        }
+    }
     fn with_mult(title: &'a str, desc: &'a str, multiplier: f32) -> Self {
         Self::WithMult {
             title,
@@ -3411,7 +3427,13 @@ impl<'a> SkillStrings<'a> {
             multiplier,
         }
     }
-
+    fn with_mult_double(title: &'a str, desc: &'a str, multiplier: f64) -> Self {
+        Self::WithMultDouble {
+            title,
+            desc,
+            multiplier,
+        }
+    }
     fn localize<'loc>(
         &self,
         i18n: &'loc Localization,
@@ -3457,12 +3479,43 @@ impl<'a> SkillStrings<'a> {
 
                 (title, desc)
             },
+            Self::WithConstDouble {
+                title,
+                desc,
+                constant,
+            } => {
+                let title = i18n.get_msg(title);
+                let args = i18n::fluent_args! {
+                    "boost" => constant,
+                    "SP" => sp(i18n, skill_set, skill),
+                };
+                let desc = i18n.get_msg_ctx(desc, &args);
+
+                (title, desc)
+            },
             Self::WithMult {
                 title,
                 desc,
                 multiplier,
             } => {
                 let percentage = hud::multiplier_to_percentage(*multiplier).abs();
+
+                let title = i18n.get_msg(title);
+
+                let args = i18n::fluent_args! {
+                    "boost" => format!("{percentage:.0}"),
+                    "SP" => sp(i18n, skill_set, skill),
+                };
+                let desc = i18n.get_msg_ctx(desc, &args);
+
+                (title, desc)
+            },
+            Self::WithMultDouble {
+                title,
+                desc,
+                multiplier,
+            } => {
+                let percentage = hud::multiplier_to_percentage(*multiplier as f32).abs();
 
                 let title = i18n.get_msg(title);
 

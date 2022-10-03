@@ -33,7 +33,7 @@ pub struct AgentData<'a> {
     pub physics_state: &'a PhysicsState,
     pub alignment: Option<&'a Alignment>,
     pub traversal_config: TraversalConfig,
-    pub scale: f32,
+    pub scale: f64,
     pub damage: f32,
     pub light_emitter: Option<&'a LightEmitter>,
     pub glider_equipped: bool,
@@ -58,10 +58,10 @@ impl<'a> TargetData<'a> {
 }
 
 pub struct AttackData {
-    pub min_attack_dist: f32,
-    pub dist_sqrd: f32,
-    pub angle: f32,
-    pub angle_xy: f32,
+    pub min_attack_dist: f64,
+    pub dist_sqrd: f64,
+    pub angle: f64,
+    pub angle_xy: f64,
 }
 
 impl AttackData {

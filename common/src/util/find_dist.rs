@@ -7,24 +7,24 @@ pub trait FindDist<T> {
     /// Must return true if the shape could be within the supplied distance but
     /// is allowed to return true if the shape is actually just out of
     /// range
-    fn approx_in_range(self, other: T, range: f32) -> bool;
+    fn approx_in_range(self, other: T, range: f64) -> bool;
     /// Find the smallest distance between the two shapes
-    fn min_distance(self, other: T) -> f32;
+    fn min_distance(self, other: T) -> f64;
 }
 
 /// A z-axis aligned cylinder
 #[derive(Clone, Copy, Debug)]
 pub struct Cylinder {
     /// Center of the cylinder
-    pub center: Vec3<f32>,
+    pub center: Vec3<f64>,
     /// Radius of the cylinder
-    pub radius: f32,
+    pub radius: f64,
     /// Height of the cylinder
-    pub height: f32,
+    pub height: f64,
 }
 
 impl Cylinder {
-    fn aabb(&self) -> Aabb<f32> {
+    fn aabb(&self) -> Aabb<f64> {
         Aabb {
             min: self.center - Vec3::new(self.radius, self.radius, self.height / 2.0),
             max: self.center + Vec3::new(self.radius, self.radius, self.height / 2.0),
@@ -33,12 +33,12 @@ impl Cylinder {
 
     #[inline]
     pub fn from_components(
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         scale: Option<crate::comp::Scale>,
         collider: Option<&crate::comp::Collider>,
         char_state: Option<&crate::comp::CharacterState>,
     ) -> Self {
-        let scale = scale.map_or(1.0, |s| s.0);
+        let scale = scale.map_or(1.0, |s| s.0) as f64;
         let radius = collider.as_ref().map_or(0.5, |c| c.bounding_radius()) * scale;
         let z_limit_modifier = char_state
             .filter(|char_state| char_state.is_dodge())
@@ -60,14 +60,14 @@ impl Cylinder {
 #[derive(Clone, Copy, Debug)]
 pub struct Cube {
     /// The position of min corner of the cube
-    pub min: Vec3<f32>,
+    pub min: Vec3<f64>,
     /// The side length of the cube
-    pub side_length: f32,
+    pub side_length: f64,
 }
 
 impl FindDist<Cylinder> for Cube {
     #[inline]
-    fn approx_in_range(self, other: Cylinder, range: f32) -> bool {
+    fn approx_in_range(self, other: Cylinder, range: f64) -> bool {
         let cube_plus_range_aabb = Aabb {
             min: self.min - range,
             max: self.min + self.side_length + range,
@@ -78,7 +78,7 @@ impl FindDist<Cylinder> for Cube {
     }
 
     #[inline]
-    fn min_distance(self, other: Cylinder) -> f32 {
+    fn min_distance(self, other: Cylinder) -> f64 {
         // Distance between centers along the z-axis
         let z_center_dist = (self.min.z + self.side_length / 2.0 - other.center.z).abs();
         // Distance between surfaces projected onto the z-axis
@@ -96,15 +96,15 @@ impl FindDist<Cylinder> for Cube {
 
 impl FindDist<Cube> for Cylinder {
     #[inline]
-    fn approx_in_range(self, other: Cube, range: f32) -> bool { other.approx_in_range(self, range) }
+    fn approx_in_range(self, other: Cube, range: f64) -> bool { other.approx_in_range(self, range) }
 
     #[inline]
-    fn min_distance(self, other: Cube) -> f32 { other.min_distance(self) }
+    fn min_distance(self, other: Cube) -> f64 { other.min_distance(self) }
 }
 
 impl FindDist<Cylinder> for Cylinder {
     #[inline]
-    fn approx_in_range(self, other: Cylinder, range: f32) -> bool {
+    fn approx_in_range(self, other: Cylinder, range: f64) -> bool {
         let mut aabb = self.aabb();
         aabb.min -= range;
         aabb.max += range;
@@ -113,7 +113,7 @@ impl FindDist<Cylinder> for Cylinder {
     }
 
     #[inline]
-    fn min_distance(self, other: Cylinder) -> f32 {
+    fn min_distance(self, other: Cylinder) -> f64 {
         // Distance between centers along the z-axis
         let z_center_dist = (self.center.z - other.center.z).abs();
         // Distance between surfaces projected onto the z-axis
@@ -126,9 +126,9 @@ impl FindDist<Cylinder> for Cylinder {
     }
 }
 
-impl FindDist<Vec3<f32>> for Cylinder {
+impl FindDist<Vec3<f64>> for Cylinder {
     #[inline]
-    fn approx_in_range(self, other: Vec3<f32>, range: f32) -> bool {
+    fn approx_in_range(self, other: Vec3<f64>, range: f64) -> bool {
         let mut aabb = self.aabb();
         aabb.min -= range;
         aabb.max += range;
@@ -137,7 +137,7 @@ impl FindDist<Vec3<f32>> for Cylinder {
     }
 
     #[inline]
-    fn min_distance(self, other: Vec3<f32>) -> f32 {
+    fn min_distance(self, other: Vec3<f64>) -> f64 {
         // Distance between center and point along the z-axis
         let z_center_dist = (self.center.z - other.z).abs();
         // Distance between surface and point projected onto the z-axis
@@ -169,7 +169,7 @@ mod tests {
         };
 
         assert!(cube.approx_in_range(cylinder, 0.0));
-        assert!(cube.min_distance(cylinder).abs() < f32::EPSILON);
+        assert!(cube.min_distance(cylinder).abs() < f64::EPSILON);
         assert!((cube.min_distance(cylinder) - cylinder.min_distance(cube)).abs() < 0.001);
 
         let cube = Cube {
@@ -203,7 +203,7 @@ mod tests {
         };
 
         assert!(cylinder.approx_in_range(cube, 0.0));
-        assert!(cylinder.min_distance(cube) < f32::EPSILON);
+        assert!(cylinder.min_distance(cube) < f64::EPSILON);
 
         let cube = Cube {
             min: Vec3::new(1.0, 2.0, 4.5),

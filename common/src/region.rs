@@ -208,7 +208,7 @@ impl RegionMap {
 
     /// Finds the region where a given entity is located using a given position
     /// to speed up the search
-    pub fn find_region(&self, entity: specs::Entity, pos: Vec3<f32>) -> Option<Vec2<i32>> {
+    pub fn find_region(&self, entity: specs::Entity, pos: Vec3<f64>) -> Option<Vec2<i32>> {
         let id = entity.id();
         // Compute key for most likely region
         let key = Self::pos_key(pos.map(|e| e as i32));
@@ -337,15 +337,15 @@ impl RegionMap {
 }
 
 /// Note vd is in blocks in this case
-pub fn region_in_vd(key: Vec2<i32>, pos: Vec3<f32>, vd: f32) -> bool {
-    let vd_extended = vd + TETHER_LENGTH as f32 * 2.0f32.sqrt();
+pub fn region_in_vd(key: Vec2<i32>, pos: Vec3<f64>, vd: f64) -> bool {
+    let vd_extended = vd + TETHER_LENGTH as f64 * 2.0f64.sqrt();
 
-    let min_region_pos = RegionMap::key_pos(key).map(|e| e as f32);
+    let min_region_pos = RegionMap::key_pos(key).map(|e| e as f64);
     // Should be diff to closest point on the square (which can be in the middle of
     // an edge)
     let diff = (min_region_pos - Vec2::from(pos)).map(|e| {
         if e < 0.0 {
-            (e + REGION_SIZE as f32).min(0.0)
+            (e + REGION_SIZE as f64).min(0.0)
         } else {
             e
         }
@@ -355,11 +355,11 @@ pub fn region_in_vd(key: Vec2<i32>, pos: Vec3<f32>, vd: f32) -> bool {
 }
 
 // Note vd is in blocks in this case
-pub fn regions_in_vd(pos: Vec3<f32>, vd: f32) -> HashSet<Vec2<i32>> {
+pub fn regions_in_vd(pos: Vec3<f64>, vd: f64) -> HashSet<Vec2<i32>> {
     let mut set = HashSet::new();
 
-    let pos_xy = Vec2::<f32>::from(pos);
-    let vd_extended = vd + TETHER_LENGTH as f32 * 2.0f32.sqrt();
+    let pos_xy = Vec2::<f64>::from(pos);
+    let vd_extended = vd + TETHER_LENGTH as f64 * 2.0f64.sqrt();
 
     let max = RegionMap::pos_key(pos_xy.map(|e| (e + vd_extended) as i32));
     let min = RegionMap::pos_key(pos_xy.map(|e| (e - vd_extended) as i32));

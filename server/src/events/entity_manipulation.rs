@@ -99,7 +99,7 @@ pub fn handle_health_change(server: &Server, entity: EcsEntity, change: HealthCh
     }
 }
 
-pub fn handle_knockback(server: &Server, entity: EcsEntity, impulse: Vec3<f32>) {
+pub fn handle_knockback(server: &Server, entity: EcsEntity, impulse: Vec3<f64>) {
     let ecs = &server.state.ecs();
     let clients = ecs.read_storage::<Client>();
 
@@ -305,7 +305,7 @@ pub fn handle_destroy(server: &mut Server, entity: EcsEntity, last_change: Healt
         let within_range = |attacker_pos: &Pos| {
             // Maximum distance that an attacker must be from an entity at the time of its
             // death to receive EXP for the kill
-            const MAX_EXP_DIST: f32 = 150.0;
+            const MAX_EXP_DIST: f64 = 150.0;
             entity_pos.0.distance_squared(attacker_pos.0) < MAX_EXP_DIST.powi(2)
         };
 
@@ -538,7 +538,7 @@ pub fn handle_delete(server: &mut Server, entity: EcsEntity) {
         .map_err(|e| error!(?e, ?entity, "Failed to delete destroyed entity"));
 }
 
-pub fn handle_land_on_ground(server: &Server, entity: EcsEntity, vel: Vec3<f32>) {
+pub fn handle_land_on_ground(server: &Server, entity: EcsEntity, vel: Vec3<f64>) {
     let ecs = server.state.ecs();
 
     if vel.z <= -30.0 {
@@ -548,7 +548,7 @@ pub fn handle_land_on_ground(server: &Server, entity: EcsEntity, vel: Vec3<f32>)
             .copied()
             .unwrap_or_default();
         let impact_energy = mass.0 * vel.z.powi(2) / 2.0;
-        let falldmg = impact_energy / 1000.0;
+        let falldmg = impact_energy as f32 / 1000.0;
 
         let inventories = ecs.read_storage::<Inventory>();
         let stats = ecs.read_storage::<Stats>();
@@ -581,7 +581,7 @@ pub fn handle_land_on_ground(server: &Server, entity: EcsEntity, vel: Vec3<f32>)
         server_eventbus.emit_now(ServerEvent::HealthChange { entity, change });
 
         // Emit poise change
-        let poise_damage = -(mass.0 * vel.magnitude_squared() / 1500.0);
+        let poise_damage = -(mass.0 * vel.magnitude_squared() / 1500.0) as f32;
         let poise_change =
             Poise::apply_poise_reduction(poise_damage, inventories.get(entity), &msm);
         let poise_change = comp::PoiseChange {
@@ -641,7 +641,7 @@ pub fn handle_respawn(server: &Server, entity: EcsEntity) {
     }
 }
 
-pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, owner: Option<Uid>) {
+pub fn handle_explosion(server: &Server, pos: Vec3<f64>, explosion: Explosion, owner: Option<Uid>) {
     // Go through all other entities
     let ecs = &server.state.ecs();
     let settings = server.settings();
@@ -652,7 +652,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
             .retrieve_entity_internal(uid.into())
     });
 
-    let explosion_volume = 6.25 * explosion.radius;
+    let explosion_volume = 6.25 * explosion.radius as f32;
     let mut emitter = server_eventbus.emitter();
     emitter.emit(ServerEvent::Sound {
         sound: Sound::new(SoundKind::Explosion, pos, explosion_volume, time.0),
@@ -660,7 +660,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
 
     // Add an outcome
     // Uses radius as outcome power for now
-    let outcome_power = explosion.radius;
+    let outcome_power = explosion.radius as f32;
     let outcomes = ecs.read_resource::<EventBus<Outcome>>();
     let mut outcomes_emitter = outcomes.emitter();
     outcomes_emitter.emit(Outcome::Explosion {
@@ -677,14 +677,14 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
 
     // Used to get strength of explosion effects as they falloff over distance
     fn cylinder_sphere_strength(
-        sphere_pos: Vec3<f32>,
-        radius: f32,
-        min_falloff: f32,
-        cyl_pos: Vec3<f32>,
+        sphere_pos: Vec3<f64>,
+        radius: f64,
+        min_falloff: f64,
+        cyl_pos: Vec3<f64>,
         cyl_body: Body,
-    ) -> f32 {
+    ) -> f64 {
         // 2d check
-        let horiz_dist = Vec2::<f32>::from(sphere_pos - cyl_pos).distance(Vec2::default())
+        let horiz_dist = Vec2::<f64>::from(sphere_pos - cyl_pos).distance(Vec2::default())
             - cyl_body.max_radius();
         // z check
         let half_body_height = cyl_body.height() / 2.0;
@@ -720,7 +720,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                 // Prevent block colour changes within the radius of a safe zone aura
                 if spatial_grid
                     .0
-                    .in_circle_aabr(pos.xy(), SAFE_ZONE_RADIUS)
+                    .in_circle_aabr(pos.xy(), SAFE_ZONE_RADIUS as f64)
                     .filter_map(|entity| {
                         auras
                             .get(entity)
@@ -738,7 +738,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                                             ..
                                         })
                                     })
-                                    .map(|(_, aura)| (*pos, aura.radius))
+                                    .map(|(_, aura)| (*pos, aura.radius as f64))
                             })
                     })
                     .any(|(aura_pos, aura_radius)| {
@@ -750,19 +750,19 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
 
                 // Color terrain
                 let mut touched_blocks = Vec::new();
-                let color_range = power * 2.7;
+                let color_range = power as f64 * 2.7;
                 for _ in 0..RAYS {
                     let dir = Vec3::new(
-                        rng.gen::<f32>() - 0.5,
-                        rng.gen::<f32>() - 0.5,
-                        rng.gen::<f32>() - 0.5,
+                        rng.gen::<f64>() - 0.5,
+                        rng.gen::<f64>() - 0.5,
+                        rng.gen::<f64>() - 0.5,
                     )
                     .normalized();
 
                     let _ = ecs
                         .read_resource::<TerrainGrid>()
-                        .ray(pos, pos + dir * color_range)
-                        .until(|_| rng.gen::<f32>() < 0.05)
+                        .ray(pos, pos + dir * color_range as f64)
+                        .until(|_| rng.gen::<f64>() < 0.05)
                         .for_each(|_: &Block, pos| touched_blocks.push(pos))
                         .cast();
                 }
@@ -774,8 +774,8 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                         if !matches!(block.kind(), BlockKind::Lava | BlockKind::GlowingRock)
                             && settings.gameplay.explosion_burn_marks
                         {
-                            let diff2 = block_pos.map(|b| b as f32).distance_squared(pos);
-                            let fade = (1.0 - diff2 / color_range.powi(2)).max(0.0);
+                            let diff2 = block_pos.map(|b| b as f64).distance_squared(pos);
+                            let fade = (1.0 - diff2 / color_range.powi(2)).max(0.0) as f32;
                             if let Some(mut color) = block.get_color() {
                                 let r = color[0] as f32
                                     + (fade * (color[0] as f32 * 0.5 - color[0] as f32));
@@ -793,7 +793,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
 
                         if block.is_bonkable() {
                             emitter.emit(ServerEvent::Bonk {
-                                pos: block_pos.map(|e| e as f32 + 0.5),
+                                pos: block_pos.map(|e| e as f64 + 0.5),
                                 owner,
                                 target: None,
                             });
@@ -804,9 +804,9 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                 // Destroy terrain
                 for _ in 0..RAYS {
                     let dir = Vec3::new(
-                        rng.gen::<f32>() - 0.5,
-                        rng.gen::<f32>() - 0.5,
-                        rng.gen::<f32>() - 0.15,
+                        rng.gen::<f64>() - 0.5,
+                        rng.gen::<f64>() - 0.5,
+                        rng.gen::<f64>() - 0.15,
                     )
                     .normalized();
 
@@ -814,7 +814,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
 
                     let terrain = ecs.read_resource::<TerrainGrid>();
                     let from = pos;
-                    let to = pos + dir * power;
+                    let to = pos + dir * power as f64;
                     let _ = terrain
                         .ray(from, to)
                         .until(|block: &Block| {
@@ -871,7 +871,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                         cylinder_sphere_strength(
                             pos,
                             explosion.radius,
-                            explosion.min_falloff,
+                            explosion.min_falloff as f64,
                             pos_b.0,
                             *body,
                         )
@@ -944,7 +944,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                             target_info,
                             dir,
                             attack_options,
-                            strength,
+                            strength as f32,
                             combat::AttackSource::Explosion,
                             *time,
                             |e| emitter.emit(e),
@@ -968,7 +968,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                         cylinder_sphere_strength(
                             pos,
                             explosion.radius,
-                            explosion.min_falloff,
+                            explosion.min_falloff as f64,
                             pos_b.0,
                             *body,
                         )
@@ -997,7 +997,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
                             .map_or(true, |h| !h.is_dead);
 
                         if is_alive {
-                            effect.modify_strength(strength);
+                            effect.modify_strength(strength as f32);
                             if !effect.is_harm() || may_harm() {
                                 server.state().apply_effect(entity_b, effect.clone(), owner);
                             }
@@ -1009,7 +1009,7 @@ pub fn handle_explosion(server: &Server, pos: Vec3<f32>, explosion: Explosion, o
     }
 }
 
-pub fn handle_bonk(server: &mut Server, pos: Vec3<f32>, owner: Option<Uid>, target: Option<Uid>) {
+pub fn handle_bonk(server: &mut Server, pos: Vec3<f64>, owner: Option<Uid>, target: Option<Uid>) {
     let ecs = &server.state.ecs();
     let terrain = ecs.read_resource::<TerrainGrid>();
     let mut block_change = ecs.write_resource::<BlockChange>();
@@ -1037,7 +1037,7 @@ pub fn handle_bonk(server: &mut Server, pos: Vec3<f32>, owner: Option<Uid>, targ
                             Some(SpriteKind::Bomb) => comp::object::Body::Bomb,
                             _ => comp::object::Body::Pouch,
                         })
-                        .with(Pos(pos.map(|e| e as f32) + Vec3::new(0.5, 0.5, 0.0)))
+                        .with(Pos(pos.map(|e| e as f64) + Vec3::new(0.5, 0.5, 0.0)))
                         .with(item)
                         .maybe_with(match block.get_sprite() {
                             Some(SpriteKind::Bomb) => Some(comp::Object::Bomb { owner }),
@@ -1228,7 +1228,7 @@ pub fn handle_parry(server: &Server, entity: EcsEntity, energy_cost: f32) {
     }
 }
 
-pub fn handle_teleport_to(server: &Server, entity: EcsEntity, target: Uid, max_range: Option<f32>) {
+pub fn handle_teleport_to(server: &Server, entity: EcsEntity, target: Uid, max_range: Option<f64>) {
     let ecs = &server.state.ecs();
     let mut positions = ecs.write_storage::<Pos>();
 
@@ -1281,7 +1281,7 @@ pub fn handle_entity_attacked_hook(server: &Server, entity: EcsEntity) {
                 if let Some(impulse_strength) = impulse_strength {
                     server_eventbus.emit_now(ServerEvent::Knockback {
                         entity,
-                        impulse: impulse_strength * *poise.knockback(),
+                        impulse: impulse_strength as f64 * *poise.knockback(),
                     });
                 }
             }

@@ -253,7 +253,7 @@ impl<'a> System<'a> for Sys {
                 let chunk = terrain.get_key(chunk_pos)?;
                 let new_pos = terrain
                     .try_find_space(entity_pos)
-                    .map(|x| x.as_::<f32>())
+                    .map(|x| x.as_::<f64>())
                     .unwrap_or_else(|| chunk.find_accessible_pos(entity_pos.xy(), false));
                 pos.0 = new_pos;
                 force_update.map(|force_update| force_update.update());
@@ -421,7 +421,7 @@ pub enum NpcData {
         scale: comp::Scale,
         loot: LootSpec<String>,
     },
-    Waypoint(Vec3<f32>),
+    Waypoint(Vec3<f64>),
 }
 
 impl NpcData {
@@ -450,7 +450,7 @@ impl NpcData {
         } = entity;
 
         if is_waypoint {
-            return Self::Waypoint(pos);
+            return Self::Waypoint(pos.map(|x|x as f64));
         }
 
         let name = name.unwrap_or_else(|| "Unnamed".to_string());
@@ -519,7 +519,7 @@ impl NpcData {
                         .maybe_with_capabilities(can_speak.then_some(BehaviorCapability::SPEAK))
                         .with_trade_site(trade_for_site),
                 )
-                .with_patrol_origin(pos)
+                .with_patrol_origin(pos.map(|x|x as f64))
                 .with_no_flee_if(matches!(agent_mark, Some(agent::Mark::Guard)) || no_flee)
         });
 
@@ -532,7 +532,7 @@ impl NpcData {
         };
 
         NpcData::Data {
-            pos: Pos(pos),
+            pos: Pos(pos.map(|x|x as f64)),
             stats,
             skill_set,
             health,
@@ -541,7 +541,7 @@ impl NpcData {
             agent,
             body,
             alignment,
-            scale: comp::Scale(scale),
+            scale: comp::Scale(scale as f64),
             loot,
         }
     }

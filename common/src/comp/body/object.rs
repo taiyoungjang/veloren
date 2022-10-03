@@ -347,7 +347,7 @@ impl Body {
             | Body::BoltIcicle
             | Body::SpitPoison => 1.0,
             Body::Bomb | Body::DagonBomb => {
-                0.5 * IRON_DENSITY * std::f32::consts::PI / 6.0 * self.dimensions().x.powi(3)
+                0.5 * IRON_DENSITY * std::f64::consts::PI / 6.0 * self.dimensions().x.powi(3)
             },
             Body::Campfire | Body::CampfireLit | Body::BarrelOrgan => 300.0,
             Body::Carpet
@@ -414,7 +414,7 @@ impl Body {
         Mass(m)
     }
 
-    pub fn dimensions(&self) -> Vec3<f32> {
+    pub fn dimensions(&self) -> Vec3<f64> {
         match self {
             Body::Arrow | Body::ArrowSnake | Body::MultiArrow | Body::ArrowTurret | Body::Dart => {
                 Vec3::new(0.01, 0.8, 0.01)

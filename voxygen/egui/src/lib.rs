@@ -85,8 +85,8 @@ pub struct EguiDebugInfo {
 pub struct EguiInnerState {
     selected_entity_info: Option<SelectedEntityInfo>,
     admin_command_state: AdminCommandState,
-    max_entity_distance: f32,
-    selected_entity_cylinder_height: f32,
+    max_entity_distance: f64,
+    selected_entity_cylinder_height: f64,
     frame_times: Vec<f32>,
     windows: EguiWindows,
 }
@@ -117,8 +117,8 @@ impl Default for EguiInnerState {
 
 pub enum EguiDebugShapeAction {
     AddCylinder {
-        radius: f32,
-        height: f32,
+        radius: f64,
+        height: f64,
     },
     RemoveShape(u64),
     SetPosAndColor {
@@ -467,7 +467,7 @@ pub fn maintain_egui_inner(
     if let Some(selected_entity) = &egui_state.selected_entity_info {
         if let Some(debug_shape_id) = selected_entity.debug_shape_id {
             if (egui_state.selected_entity_cylinder_height - selected_entity_cylinder_height).abs()
-                > f32::EPSILON
+                > f64::EPSILON
             {
                 egui_actions.actions.push(EguiAction::DebugShape(
                     EguiDebugShapeAction::RemoveShape(debug_shape_id),
@@ -541,7 +541,7 @@ fn selected_entity_window(
                     EguiDebugShapeAction::SetPosAndColor {
                         id: shape_id,
                         color: [1.0, 1.0, 0.0, 0.5],
-                        pos: [pos.0.x, pos.0.y, pos.0.z + 2.0, 0.0],
+                        pos: [pos.0.x as f32, pos.0.y as f32, pos.0.z as f32 + 2.0, 0.0],
                     },
                 ));
             }

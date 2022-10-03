@@ -1,5 +1,5 @@
 use crate::util::{Dir, Plane, Projection};
-use core::f32::consts::{FRAC_PI_2, PI, TAU};
+use core::f64::consts::{FRAC_PI_2, PI, TAU};
 use serde::{Deserialize, Serialize};
 use specs::Component;
 use vek::{Quaternion, Vec2, Vec3};
@@ -8,7 +8,7 @@ use vek::{Quaternion, Vec2, Vec3};
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(into = "SerdeOri")]
 #[serde(from = "SerdeOri")]
-pub struct Ori(Quaternion<f32>);
+pub struct Ori(Quaternion<f64>);
 
 impl Default for Ori {
     /// Returns the default orientation (no rotation; default Dir)
@@ -16,11 +16,11 @@ impl Default for Ori {
 }
 
 impl Ori {
-    pub fn new(quat: Quaternion<f32>) -> Self {
+    pub fn new(quat: Quaternion<f64>) -> Self {
         #[cfg(debug_assert)]
         {
             let v4 = quat.into_vec4();
-            debug_assert!(v4.map(f32::is_finite).reduce_and());
+            debug_assert!(v4.map(f64::is_finite).reduce_and());
             debug_assert!(v4.is_normalized());
         }
         Self(quat)
@@ -29,19 +29,19 @@ impl Ori {
     /// Tries to convert into a Dir and then the appropriate rotation
     pub fn from_unnormalized_vec<T>(vec: T) -> Option<Self>
     where
-        T: Into<Vec3<f32>>,
+        T: Into<Vec3<f64>>,
     {
         Dir::from_unnormalized(vec.into()).map(Self::from)
     }
 
     /// Look direction as a vector (no pedantic normalization performed)
-    pub fn look_vec(self) -> Vec3<f32> { self.to_quat() * *Dir::default() }
+    pub fn look_vec(self) -> Vec3<f64> { self.to_quat() * *Dir::default() }
 
     /// Get the internal quaternion representing the rotation from
     /// `Dir::default()` to this orientation.
     ///
     /// The operation is a cheap copy.
-    pub fn to_quat(self) -> Quaternion<f32> {
+    pub fn to_quat(self) -> Quaternion<f64> {
         debug_assert!(self.is_normalized());
         self.0
     }
@@ -57,12 +57,12 @@ impl Ori {
 
     pub fn right(&self) -> Dir { self.yawed_right(PI / 2.0).look_dir() }
 
-    pub fn slerp(ori1: Self, ori2: Self, s: f32) -> Self {
+    pub fn slerp(ori1: Self, ori2: Self, s: f64) -> Self {
         Self(Quaternion::slerp(ori1.0, ori2.0, s).normalized())
     }
 
     #[must_use]
-    pub fn slerped_towards(self, ori: Ori, s: f32) -> Self { Self::slerp(self, ori, s) }
+    pub fn slerped_towards(self, ori: Ori, s: f64) -> Self { Self::slerp(self, ori, s) }
 
     /// Multiply rotation quaternion by `q`
     /// (the rotations are in local vector space).
@@ -71,17 +71,17 @@ impl Ori {
     /// use vek::{Quaternion, Vec3};
     /// use veloren_common::{comp::Ori, util::Dir};
     ///
-    /// let ang = 90_f32.to_radians();
+    /// let ang = 90_f64.to_radians();
     /// let roll_right = Quaternion::rotation_y(ang);
     /// let pitch_up = Quaternion::rotation_x(ang);
     ///
     /// let ori1 = Ori::from(Dir::new(Vec3::unit_x()));
     /// let ori2 = Ori::default().rotated(roll_right).rotated(pitch_up);
     ///
-    /// assert!((ori1.look_dir().dot(*ori2.look_dir()) - 1.0).abs() <= f32::EPSILON);
+    /// assert!((ori1.look_dir().dot(*ori2.look_dir()) - 1.0).abs() <= f64::EPSILON);
     /// ```
     #[must_use]
-    pub fn rotated(self, q: Quaternion<f32>) -> Self {
+    pub fn rotated(self, q: Quaternion<f64>) -> Self {
         Self((self.to_quat() * q.normalized()).normalized())
     }
 
@@ -92,17 +92,17 @@ impl Ori {
     /// use vek::{Quaternion, Vec3};
     /// use veloren_common::{comp::Ori, util::Dir};
     ///
-    /// let ang = 90_f32.to_radians();
+    /// let ang = 90_f64.to_radians();
     /// let roll_right = Quaternion::rotation_y(ang);
     /// let pitch_up = Quaternion::rotation_x(ang);
     ///
     /// let ori1 = Ori::from(Dir::up());
     /// let ori2 = Ori::default().prerotated(roll_right).prerotated(pitch_up);
     ///
-    /// assert!((ori1.look_dir().dot(*ori2.look_dir()) - 1.0).abs() <= f32::EPSILON);
+    /// assert!((ori1.look_dir().dot(*ori2.look_dir()) - 1.0).abs() <= f64::EPSILON);
     /// ```
     #[must_use]
-    pub fn prerotated(self, q: Quaternion<f32>) -> Self {
+    pub fn prerotated(self, q: Quaternion<f64>) -> Self {
         Self((q.normalized() * self.to_quat()).normalized())
     }
 
@@ -112,7 +112,7 @@ impl Ori {
     /// use vek::Vec3;
     /// use veloren_common::{comp::Ori, util::Dir};
     ///
-    /// let ang = 90_f32.to_radians();
+    /// let ang = 90_f64.to_radians();
     /// let (fw, left, up) = (Dir::default(), Dir::left(), Dir::up());
     ///
     /// let ori = Ori::default().rolled_left(ang).pitched_up(ang);
@@ -121,9 +121,9 @@ impl Ori {
     /// let ori = Ori::default().rolled_right(ang).pitched_up(2.0 * ang);
     /// approx::assert_relative_eq!(ori.global_to_local(up).dot(*left), 1.0);
     /// ```
-    pub fn global_to_local<T>(&self, global: T) -> <Quaternion<f32> as std::ops::Mul<T>>::Output
+    pub fn global_to_local<T>(&self, global: T) -> <Quaternion<f64> as std::ops::Mul<T>>::Output
     where
-        Quaternion<f32>: std::ops::Mul<T>,
+        Quaternion<f64>: std::ops::Mul<T>,
     {
         self.to_quat().inverse() * global
     }
@@ -134,7 +134,7 @@ impl Ori {
     /// use vek::Vec3;
     /// use veloren_common::{comp::Ori, util::Dir};
     ///
-    /// let ang = 90_f32.to_radians();
+    /// let ang = 90_f64.to_radians();
     /// let (fw, left, up) = (Dir::default(), Dir::left(), Dir::up());
     ///
     /// let ori = Ori::default().rolled_left(ang).pitched_up(ang);
@@ -143,9 +143,9 @@ impl Ori {
     /// let ori = Ori::default().rolled_right(ang).pitched_up(2.0 * ang);
     /// approx::assert_relative_eq!(ori.local_to_global(up).dot(*left), 1.0);
     /// ```
-    pub fn local_to_global<T>(&self, local: T) -> <Quaternion<f32> as std::ops::Mul<T>>::Output
+    pub fn local_to_global<T>(&self, local: T) -> <Quaternion<f64> as std::ops::Mul<T>>::Output
     where
-        Quaternion<f32>: std::ops::Mul<T>,
+        Quaternion<f64>: std::ops::Mul<T>,
     {
         self.to_quat() * local
     }
@@ -159,7 +159,7 @@ impl Ori {
         // Uses a multiple of EPSILON to be safe
         // We can just check z since beyond floating point errors `fw` should be
         // normalized
-        if 1.0 - fw.z.abs() > f32::EPSILON * 4.0 {
+        if 1.0 - fw.z.abs() > f64::EPSILON * 4.0 {
             // We know direction lies in the xy plane so we only need to compute a rotation
             // about the z-axis
             let Vec2 { x, y } = fw.xy().normalized();
@@ -179,7 +179,7 @@ impl Ori {
             //
             // removes a branch
             //
-            // use core::f32::consts::FRAC_1_SQRT_2;
+            // use core::f64::consts::FRAC_1_SQRT_2;
             // let cos = FRAC_1_SQRT_2;
             // let sin = -FRAC_1_SQRT_2 * fw.z.signum();
             // let axis = Vec3::unit_x();
@@ -197,7 +197,7 @@ impl Ori {
     /// angle between vectors at the start and end points.
     ///
     /// Returns angle in radians
-    pub fn angle_between(self, other: Self) -> f32 {
+    pub fn angle_between(self, other: Self) -> f64 {
         // Compute quaternion from one ori to the other
         // https://www.mathworks.com/matlabcentral/answers/476474-how-to-find-the-angle-between-two-quaternions#answer_387973
         let between = self.to_quat().conjugate() * other.to_quat();
@@ -211,35 +211,35 @@ impl Ori {
         if angle < PI { angle } else { TAU - angle }
     }
 
-    pub fn dot(self, other: Self) -> f32 { self.look_vec().dot(other.look_vec()) }
+    pub fn dot(self, other: Self) -> f64 { self.look_vec().dot(other.look_vec()) }
 
     #[must_use]
-    pub fn pitched_up(self, angle_radians: f32) -> Self {
+    pub fn pitched_up(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_x(angle_radians))
     }
 
     #[must_use]
-    pub fn pitched_down(self, angle_radians: f32) -> Self {
+    pub fn pitched_down(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_x(-angle_radians))
     }
 
     #[must_use]
-    pub fn yawed_left(self, angle_radians: f32) -> Self {
+    pub fn yawed_left(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_z(angle_radians))
     }
 
     #[must_use]
-    pub fn yawed_right(self, angle_radians: f32) -> Self {
+    pub fn yawed_right(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_z(-angle_radians))
     }
 
     #[must_use]
-    pub fn rolled_left(self, angle_radians: f32) -> Self {
+    pub fn rolled_left(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_y(-angle_radians))
     }
 
     #[must_use]
-    pub fn rolled_right(self, angle_radians: f32) -> Self {
+    pub fn rolled_right(self, angle_radians: f64) -> Self {
         self.rotated(Quaternion::rotation_y(angle_radians))
     }
 
@@ -275,21 +275,21 @@ impl Ori {
     /// ```
     /// use veloren_common::comp::Ori;
     ///
-    /// let ang = 45_f32.to_radians();
+    /// let ang = 45_f64.to_radians();
     /// let zenith = vek::Vec3::unit_z();
     ///
     /// let rl = Ori::default().rolled_left(ang);
-    /// assert!((rl.up().angle_between(zenith) - ang).abs() <= f32::EPSILON);
-    /// assert!(rl.uprighted().up().angle_between(zenith) <= f32::EPSILON);
+    /// assert!((rl.up().angle_between(zenith) - ang).abs() <= f64::EPSILON);
+    /// assert!(rl.uprighted().up().angle_between(zenith) <= f64::EPSILON);
     ///
     /// let pd_rr = Ori::default().pitched_down(ang).rolled_right(ang);
     /// let pd_upr = pd_rr.uprighted();
     ///
-    /// assert!((pd_upr.up().angle_between(zenith) - ang).abs() <= f32::EPSILON);
+    /// assert!((pd_upr.up().angle_between(zenith) - ang).abs() <= f64::EPSILON);
     ///
     /// let ang1 = pd_upr.rolled_right(ang).up().angle_between(zenith);
     /// let ang2 = pd_rr.up().angle_between(zenith);
-    /// assert!((ang1 - ang2).abs() <= f32::EPSILON);
+    /// assert!((ang1 - ang2).abs() <= f64::EPSILON);
     /// ```
     #[must_use]
     pub fn uprighted(self) -> Self { self.look_dir().into() }
@@ -301,7 +301,7 @@ impl Ori {
 /// circle to rotate to
 ///
 /// NOTE: the provided axis and 2D vector must be normalized
-fn rotation_2d(Vec2 { x, y }: Vec2<f32>, axis: Vec3<f32>) -> Quaternion<f32> {
+fn rotation_2d(Vec2 { x, y }: Vec2<f64>, axis: Vec3<f64>) -> Quaternion<f64> {
     // Skip needing the angle for quaternion construction by computing cos/sin
     // directly from the normalized x value
     //
@@ -330,7 +330,7 @@ impl From<Dir> for Ori {
     fn from(dir: Dir) -> Self {
         // Check that dir is not straight up/down
         // Uses a multiple of EPSILON to be safe
-        let quat = if 1.0 - dir.z.abs() > f32::EPSILON * 4.0 {
+        let quat = if 1.0 - dir.z.abs() > f64::EPSILON * 4.0 {
             // Compute rotation that will give an "upright" orientation (no
             // rolling):
             let xy_len = dir.xy().magnitude();
@@ -356,27 +356,27 @@ impl From<Dir> for Ori {
     }
 }
 
-impl From<Vec3<f32>> for Ori {
-    fn from(dir: Vec3<f32>) -> Self { Dir::from_unnormalized(dir).unwrap_or_default().into() }
+impl From<Vec3<f64>> for Ori {
+    fn from(dir: Vec3<f64>) -> Self { Dir::from_unnormalized(dir).unwrap_or_default().into() }
 }
 
-impl From<Quaternion<f32>> for Ori {
-    fn from(quat: Quaternion<f32>) -> Self { Self::new(quat) }
+impl From<Quaternion<f64>> for Ori {
+    fn from(quat: Quaternion<f64>) -> Self { Self::new(quat) }
 }
 
-impl From<vek::quaternion::repr_simd::Quaternion<f32>> for Ori {
+impl From<vek::quaternion::repr_simd::Quaternion<f64>> for Ori {
     fn from(
-        vek::quaternion::repr_simd::Quaternion { x, y, z, w }: vek::quaternion::repr_simd::Quaternion<f32>,
+        vek::quaternion::repr_simd::Quaternion { x, y, z, w }: vek::quaternion::repr_simd::Quaternion<f64>,
     ) -> Self {
         Self::from(Quaternion { x, y, z, w })
     }
 }
 
-impl From<Ori> for Quaternion<f32> {
+impl From<Ori> for Quaternion<f64> {
     fn from(Ori(q): Ori) -> Self { q }
 }
 
-impl From<Ori> for vek::quaternion::repr_simd::Quaternion<f32> {
+impl From<Ori> for vek::quaternion::repr_simd::Quaternion<f64> {
     fn from(Ori(Quaternion { x, y, z, w }): Ori) -> Self {
         vek::quaternion::repr_simd::Quaternion { x, y, z, w }
     }
@@ -386,30 +386,30 @@ impl From<Ori> for Dir {
     fn from(ori: Ori) -> Self { ori.look_dir() }
 }
 
-impl From<Ori> for Vec3<f32> {
+impl From<Ori> for Vec3<f64> {
     fn from(ori: Ori) -> Self { ori.look_vec() }
 }
 
-impl From<Ori> for vek::vec::repr_simd::Vec3<f32> {
+impl From<Ori> for vek::vec::repr_simd::Vec3<f64> {
     fn from(ori: Ori) -> Self { vek::vec::repr_simd::Vec3::from(ori.look_vec()) }
 }
 
-impl From<Ori> for Vec2<f32> {
+impl From<Ori> for Vec2<f64> {
     fn from(ori: Ori) -> Self { ori.look_dir().to_horizontal().unwrap_or_default().xy() }
 }
 
-impl From<Ori> for vek::vec::repr_simd::Vec2<f32> {
+impl From<Ori> for vek::vec::repr_simd::Vec2<f64> {
     fn from(ori: Ori) -> Self { vek::vec::repr_simd::Vec2::from(ori.look_vec().xy()) }
 }
 
 // Validate at Deserialization
 #[derive(Copy, Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-struct SerdeOri(Quaternion<f32>);
+struct SerdeOri(Quaternion<f64>);
 
 impl From<SerdeOri> for Ori {
     fn from(serde_quat: SerdeOri) -> Self {
-        let quat: Quaternion<f32> = serde_quat.0;
-        if quat.into_vec4().map(f32::is_nan).reduce_or() {
+        let quat: Quaternion<f64> = serde_quat.0;
+        if quat.into_vec4().map(f64::is_nan).reduce_or() {
             tracing::warn!(
                 ?quat,
                 "Deserialized rotation quaternion containing NaNs, replacing with default"
@@ -445,7 +445,7 @@ mod tests {
     fn dirs() -> impl Iterator<Item = Dir> {
         let angles = 32;
         (0..angles).flat_map(move |i| {
-            let theta = PI * 2.0 * (i as f32) / (angles as f32);
+            let theta = PI * 2.0 * (i as f64) / (angles as f64);
 
             let v = Vec3::unit_y();
             let q = Quaternion::rotation_x(theta);
@@ -474,11 +474,11 @@ mod tests {
             approx::assert_relative_eq!(horizontal.look_dir().z, 0.0);
             // Check correctness by comparing with Dir::to_horizontal
             if let Some(dir_h) = ori.look_dir().to_horizontal() {
-                let quat_correct = Quaternion::<f32>::rotation_from_to_3d(Dir::default(), dir_h);
+                let quat_correct = Quaternion::<f64>::rotation_from_to_3d(Dir::default(), dir_h);
                 #[rustfmt::skip]
                 assert!(
                     dir_h
-                        .map2(*horizontal.look_dir(), |d, o| approx::relative_eq!(d, o, epsilon = f32::EPSILON * 4.0))
+                        .map2(*horizontal.look_dir(), |d, o| approx::relative_eq!(d, o, epsilon = f64::EPSILON * 4.0))
                         .reduce_and(),
                     "\n\
                     Original: {:?}\n\
@@ -501,7 +501,7 @@ mod tests {
     #[test]
     fn angle_between() {
         let axis_list = (-16..17)
-            .map(|i| i as f32 / 16.0)
+            .map(|i| i as f64 / 16.0)
             .flat_map(|fraction| {
                 [
                     Vec3::new(1.0 - fraction, fraction, 0.0),
@@ -511,7 +511,7 @@ mod tests {
             })
             .collect::<Vec<_>>();
         // Iterator over some angles between 0 and 180
-        let angles = (0..129).map(|i| i as f32 / 128.0 * PI);
+        let angles = (0..129).map(|i| i as f64 / 128.0 * PI);
 
         for angle_a in angles.clone() {
             for angle_b in angles.clone() {
@@ -521,7 +521,7 @@ mod tests {
 
                     let angle = (angle_a - angle_b).abs();
                     let epsilon = match angle {
-                        angle if angle > 0.5 => f32::EPSILON * 20.0,
+                        angle if angle > 0.5 => f64::EPSILON * 20.0,
                         angle if angle > 0.2 => 0.00001,
                         angle if angle > 0.01 => 0.0001,
                         _ => 0.002,

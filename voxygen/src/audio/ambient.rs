@@ -76,7 +76,7 @@ impl AmbientMgr {
 
                 // Lerp multiplier of current channel
                 // TODO: Make this not framerate dependent
-                channel.multiplier = Lerp::lerp(initial_volume, target_volume, 0.02);
+                channel.multiplier = Lerp::lerp(initial_volume, target_volume as f32, 0.02);
 
                 // Update with sfx volume
                 channel.set_volume(ambience_volume);
@@ -109,7 +109,7 @@ impl AmbientMgr {
 }
 
 impl AmbientChannelTag {
-    pub fn tag_max_volume(tag: AmbientChannelTag) -> f32 {
+    pub fn tag_max_volume(tag: AmbientChannelTag) -> f64 {
         match tag {
             AmbientChannelTag::Wind => 1.0,
             AmbientChannelTag::Rain => 0.95,
@@ -120,14 +120,14 @@ impl AmbientChannelTag {
     }
 
     // Gets appropriate volume for each tag
-    pub fn get_tag_volume(tag: AmbientChannelTag, client: &Client, camera: &Camera) -> f32 {
+    pub fn get_tag_volume(tag: AmbientChannelTag, client: &Client, camera: &Camera) -> f64 {
         match tag {
             AmbientChannelTag::Wind => {
-                let focus_off = camera.get_focus_pos().map(f32::trunc);
+                let focus_off = camera.get_focus_pos().map(f64::trunc);
                 let cam_pos = camera.dependents().cam_pos + focus_off;
 
                 let (terrain_alt, tree_density) = if let Some(chunk) = client.current_chunk() {
-                    (chunk.meta().alt(), chunk.meta().tree_density())
+                    (chunk.meta().alt() as f64, chunk.meta().tree_density() as f64)
                 } else {
                     (0.0, 0.0)
                 };
@@ -146,8 +146,8 @@ impl AmbientChannelTag {
                 // weathersim
                 // Client wind speed is a float approx. -30.0 to 30.0 (polarity depending on
                 // direction)
-                let wind_speed_multiplier = (client.weather_at_player().wind.magnitude_squared()
-                    / 15.0_f32.powi(2))
+                let wind_speed_multiplier = (client.weather_at_player().wind.magnitude_squared() as f64
+                    / 15.0_f64.powi(2))
                 .min(1.33);
 
                 (alt_multiplier
@@ -156,11 +156,11 @@ impl AmbientChannelTag {
                     + (alt_multiplier * 0.15) * tree_multiplier
             },
             AmbientChannelTag::Rain => {
-                let focus_off = camera.get_focus_pos().map(f32::trunc);
+                let focus_off = camera.get_focus_pos().map(f64::trunc);
                 let cam_pos = camera.dependents().cam_pos + focus_off;
 
                 let terrain_alt = if let Some(chunk) = client.current_chunk() {
-                    chunk.meta().alt()
+                    chunk.meta().alt() as f64
                 } else {
                     0.0
                 };
@@ -168,10 +168,10 @@ impl AmbientChannelTag {
                 let camera_multiplier =
                     1.0 - ((cam_pos.z - terrain_alt).abs() / 75.0).powi(2).min(1.0);
 
-                (client.weather_at_player().rain * 3.0) * camera_multiplier
+                (client.weather_at_player().rain as f64 * 3.0) * camera_multiplier
             },
             AmbientChannelTag::Thunder => {
-                let rain_intensity = client.weather_at_player().rain * 3.0;
+                let rain_intensity = client.weather_at_player().rain as f64 * 3.0;
 
                 if rain_intensity < 0.7 {
                     0.0
@@ -180,11 +180,11 @@ impl AmbientChannelTag {
                 }
             },
             AmbientChannelTag::Leaves => {
-                let focus_off = camera.get_focus_pos().map(f32::trunc);
+                let focus_off = camera.get_focus_pos().map(f64::trunc);
                 let cam_pos = camera.dependents().cam_pos + focus_off;
 
                 let (terrain_alt, tree_density) = if let Some(chunk) = client.current_chunk() {
-                    (chunk.meta().alt(), chunk.meta().tree_density())
+                    (chunk.meta().alt() as f64, chunk.meta().tree_density() as f64)
                 } else {
                     (0.0, 0.0)
                 };
@@ -203,17 +203,17 @@ impl AmbientChannelTag {
                 .min(1.0);
 
                 if tree_multiplier > 0.1 {
-                    tree_multiplier * (1.0 + wind_speed_multiplier)
+                    tree_multiplier as f64 * (1.0 + wind_speed_multiplier) as f64
                 } else {
                     0.0
                 }
             },
             AmbientChannelTag::Cave => {
-                let focus_off = camera.get_focus_pos().map(f32::trunc);
+                let focus_off = camera.get_focus_pos().map(f64::trunc);
                 let cam_pos = camera.dependents().cam_pos + focus_off;
 
                 let terrain_alt = if let Some(chunk) = client.current_chunk() {
-                    chunk.meta().alt()
+                    chunk.meta().alt() as f64
                 } else {
                     0.0
                 };
@@ -222,9 +222,9 @@ impl AmbientChannelTag {
                 let camera_multiplier = (-(cam_pos.z - terrain_alt) / 100.0).max(0.0);
 
                 if client.current_site() == SiteKindMeta::Cave {
-                    camera_multiplier
+                    camera_multiplier as f64
                 } else {
-                    0.0
+                    0.0 as f64
                 }
             },
         }
@@ -237,14 +237,14 @@ fn get_target_volume(
     state: &State,
     client: &Client,
     camera: &Camera,
-) -> f32 {
-    let focus_off = camera.get_focus_pos().map(f32::trunc);
+) -> f64 {
+    let focus_off = camera.get_focus_pos().map(f64::trunc);
     let cam_pos = camera.dependents().cam_pos + focus_off;
 
-    let mut volume_multiplier: f32 = AmbientChannelTag::get_tag_volume(tag, client, camera);
+    let mut volume_multiplier: f64 = AmbientChannelTag::get_tag_volume(tag, client, camera);
 
     let terrain_alt = if let Some(chunk) = client.current_chunk() {
-        chunk.meta().alt()
+        chunk.meta().alt() as f64
     } else {
         0.0
     };

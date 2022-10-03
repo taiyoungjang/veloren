@@ -697,7 +697,7 @@ pub fn apply_caverns_to<R: Rng>(canvas: &mut Canvas, dynamic_rng: &mut R) {
         );
 
         let cavern_avg_alt =
-            CONFIG.sea_level.min(alt * 0.25) - height_range.end - surface_clearance;
+            CONFIG.sea_level.min(alt as f32 * 0.25) - height_range.end - surface_clearance;
 
         let cavern = canvern_nz_at(wpos2d);
         let cavern_height = cavern * cavern_avg_height;

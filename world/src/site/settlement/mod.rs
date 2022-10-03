@@ -1324,9 +1324,9 @@ impl Land {
         &self,
         origin: Vec2<i32>,
         dest: Vec2<i32>,
-        mut path_cost_fn: impl FnMut(Option<&Tile>, Option<&Tile>) -> f32,
+        mut path_cost_fn: impl FnMut(Option<&Tile>, Option<&Tile>) -> f64,
     ) -> Option<Path<Vec2<i32>>> {
-        let heuristic = |pos: &Vec2<i32>| (pos - dest).map(|e| e as f32).magnitude();
+        let heuristic = |pos: &Vec2<i32>| (pos - dest).map(|e| e as f64).magnitude();
         let neighbors = |pos: &Vec2<i32>| {
             let pos = *pos;
             CARDINALS.iter().map(move |dir| pos + *dir)

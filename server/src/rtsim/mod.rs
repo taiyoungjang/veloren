@@ -67,7 +67,7 @@ impl RtSim {
         self.entities.get_mut(entity).map(|e| e.is_loaded = true);
     }
 
-    pub fn update_entity(&mut self, entity: RtSimId, pos: Vec3<f32>) {
+    pub fn update_entity(&mut self, entity: RtSimId, pos: Vec3<f64>) {
         self.entities.get_mut(entity).map(|e| e.pos = pos);
     }
 
@@ -131,7 +131,7 @@ pub fn init(
 
             rtsim.entities.insert(Entity {
                 is_loaded: false,
-                pos: Vec3::from(pos.map(|e| e as f32)),
+                pos: Vec3::from(pos.map(|e| e as f64)),
                 seed: thread_rng().gen(),
                 controller: RtSimController::default(),
                 last_time_ticked: 0.0,
@@ -194,7 +194,7 @@ pub fn init(
                             for _ in 0..25 {
                                 rtsim.entities.insert(Entity {
                                     is_loaded: false,
-                                    pos: Vec3::from(pos.map(|e| e as f32)),
+                                    pos: Vec3::from(pos.map(|e| e as f64)),
                                     seed: thread_rng().gen(),
                                     controller: RtSimController::default(),
                                     last_time_ticked: 0.0,
@@ -218,7 +218,7 @@ pub fn init(
                                     site2.tile_center_wpos(plot.root_tile())
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -242,7 +242,7 @@ pub fn init(
                                         )
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -266,7 +266,7 @@ pub fn init(
                                         )
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -290,7 +290,7 @@ pub fn init(
                                         )
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -311,7 +311,7 @@ pub fn init(
                                     site2.tile_center_wpos(plot.root_tile())
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -335,7 +335,7 @@ pub fn init(
                                         )
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,
@@ -359,7 +359,7 @@ pub fn init(
                                         )
                                 })
                                 .with_z(0)
-                                .map(|e| e as f32),
+                                .map(|e| e as f64),
                             seed: thread_rng().gen(),
                             controller: RtSimController::default(),
                             last_time_ticked: 0.0,

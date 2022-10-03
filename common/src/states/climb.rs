@@ -72,21 +72,21 @@ impl CharacterBehavior for Data {
                 .flatten()
             {
                 // How strong the climb boost is relative to a normal jump
-                const CLIMB_BOOST_JUMP_FACTOR: f32 = 0.5;
+                const CLIMB_BOOST_JUMP_FACTOR: f64 = 0.5;
                 // They've climbed atop something, give them a boost
                 output_events.emit_local(LocalEvent::Jump(
                     data.entity,
-                    CLIMB_BOOST_JUMP_FACTOR * impulse / data.mass.0,
+                    CLIMB_BOOST_JUMP_FACTOR * impulse as f64 / data.mass.0,
                 ));
             };
             update.character = CharacterState::Idle(idle::Data::default());
             return update;
         };
         // Move player
-        update.vel.0 += Vec2::broadcast(data.dt.0)
+        update.vel.0 += Vec2::broadcast(data.dt.0 as f64)
             * data.inputs.move_dir
-            * if update.vel.0.magnitude_squared() < self.static_data.movement_speed.powi(2) {
-                self.static_data.movement_speed.powi(2)
+            * if update.vel.0.magnitude_squared() < self.static_data.movement_speed.powi(2) as f64 {
+                self.static_data.movement_speed.powi(2) as f64
             } else {
                 0.0
             };
@@ -112,22 +112,22 @@ impl CharacterBehavior for Data {
             update.ori = update.ori.slerped_towards(
                 Ori::from(ori_dir),
                 if data.physics.on_ground.is_some() {
-                    9.0
+                    9.0 as f64
                 } else {
-                    2.0
-                } * data.dt.0,
+                    2.0 as f64
+                } * data.dt.0 as f64,
             );
         };
 
         // Apply Vertical Climbing Movement
         match climb {
             Climb::Down => {
-                update.vel.0.z += data.dt.0 * (GRAVITY - self.static_data.movement_speed.powi(2))
+                update.vel.0.z += data.dt.0 as f64 * (GRAVITY - self.static_data.movement_speed.powi(2) as f64)
             },
             Climb::Up => {
-                update.vel.0.z += data.dt.0 * (GRAVITY + self.static_data.movement_speed.powi(2))
+                update.vel.0.z += data.dt.0 as f64 * (GRAVITY + self.static_data.movement_speed.powi(2) as f64)
             },
-            Climb::Hold => update.vel.0.z += data.dt.0 * GRAVITY,
+            Climb::Hold => update.vel.0.z += data.dt.0 as f64 * GRAVITY,
         }
 
         update

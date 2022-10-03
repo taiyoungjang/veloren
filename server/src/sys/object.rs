@@ -75,17 +75,17 @@ impl<'a> System<'a> for Sys {
                                 util::Dir,
                             };
                             use rand::Rng;
-                            use std::{f32::consts::PI, time::Duration};
+                            use std::{f64::consts::PI, time::Duration};
                             use vek::{Rgb, Vec3};
                             let mut rng = rand::thread_rng();
                             // Note that if the expected fireworks per firework is > 1, this will
                             // eventually cause enough server lag that more players can't log in.
-                            let thresholds: &[(f32, usize)] = &[(0.25, 2), (0.7, 1)];
+                            let thresholds: &[(f64, usize)] = &[(0.25, 2), (0.7, 1)];
                             let expected = {
                                 let mut total = 0.0;
                                 let mut cumulative_probability = 0.0;
                                 for (p, n) in thresholds {
-                                    total += (p - cumulative_probability) * *n as f32;
+                                    total += (p - cumulative_probability) * *n as f64;
                                     cumulative_probability += p;
                                 }
                                 total
@@ -102,8 +102,8 @@ impl<'a> System<'a> for Sys {
                             })();
                             for _ in 0..num_fireworks {
                                 let speed: f32 = rng.gen_range(40.0..80.0);
-                                let theta: f32 = rng.gen_range(0.0..2.0 * PI);
-                                let phi: f32 = rng.gen_range(0.25 * PI..0.5 * PI);
+                                let theta: f64 = rng.gen_range(0.0..2.0 * PI);
+                                let phi: f64 = rng.gen_range(0.25 * PI..0.5 * PI);
                                 let dir = Dir::from_unnormalized(Vec3::new(
                                     theta.cos(),
                                     theta.sin(),

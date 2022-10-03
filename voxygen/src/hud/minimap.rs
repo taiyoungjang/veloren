@@ -216,7 +216,7 @@ impl VoxelMinimap {
         } else {
             return;
         };
-        let vpos = pos.xy() - VOXEL_MINIMAP_SIDELENGTH as f32 / 2.0;
+        let vpos = pos.xy().map(|x|x as f32) - VOXEL_MINIMAP_SIDELENGTH as f32 / 2.0;
         let cpos: Vec2<i32> = vpos
             .map2(TerrainChunkSize::RECT_SIZE, |i, j| (i as u32).div_euclid(j))
             .as_();
@@ -658,7 +658,7 @@ impl<'a> Widget for MiniMap<'a> {
 
             let wpos_to_rpos = |wpos: Vec2<f32>, limit: bool| {
                 // Site pos in world coordinates relative to the player
-                let rwpos = wpos - player_pos;
+                let rwpos = wpos - player_pos.map(|x|x as f32);
                 // Convert to chunk coordinates
                 let rcpos = rwpos.map2(TerrainChunkSize::RECT_SIZE, |e, sz| e / sz as f32);
                 // Convert to fractional coordinates relative to the worldsize

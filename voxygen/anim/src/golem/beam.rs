@@ -34,11 +34,11 @@ impl Animation for BeamAnimation {
         let move1 = move1base * pullback;
         let move2 = move2base * pullback;
 
-        next.head.orientation = Quaternion::rotation_x(move1iso * 0.5 + move2 * (look_dir.z * 1.0));
+        next.head.orientation = Quaternion::rotation_x(move1iso * 0.5 + move2 * (look_dir.z as f32 * 1.0));
         next.head.position = Vec3::new(
             0.0,
             s_a.head.0,
-            s_a.head.1 - move2 * 5.0 * (look_dir.z * 1.0).min(0.0),
+            s_a.head.1 - move2 * 5.0 * (look_dir.z as f32 * 1.0).min(0.0),
         );
 
         next.upper_torso.orientation =

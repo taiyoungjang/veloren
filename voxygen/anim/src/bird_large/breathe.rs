@@ -64,7 +64,7 @@ impl Animation for BreatheAnimation {
 
         next.head.position = Vec3::new(0.0, s_a.head.0, s_a.head.1);
         next.head.orientation =
-            Quaternion::rotation_x(movement1abs * 0.5 - movement2abs * 0.5 + look_dir.z * 0.4);
+            Quaternion::rotation_x(movement1abs * 0.5 - movement2abs * 0.5 + look_dir.z as f32 * 0.4);
 
         next.beak.position = Vec3::new(0.0, s_a.beak.0, s_a.beak.1);
         next.beak.orientation = Quaternion::rotation_x(movement1abs * -0.7 + twitch2 * 0.1);
@@ -114,7 +114,7 @@ impl Animation for BreatheAnimation {
             next.head.orientation = Quaternion::rotation_x(
                 movement1abs * 0.5
                     + movement2abs * (-0.5 + velocity.xy().magnitude() * 0.2).min(0.0)
-                    + look_dir.z * 0.4,
+                    + look_dir.z as f32 * 0.4,
             );
         }
 

@@ -183,7 +183,7 @@ impl CharacterBehavior for Data {
                     handle_orientation(
                         data,
                         &mut update,
-                        0.4 * self.static_data.ori_modifier,
+                        0.4 * self.static_data.ori_modifier as f64,
                         None,
                     );
 
@@ -243,7 +243,7 @@ impl CharacterBehavior for Data {
                     let knockback = AttackEffect::new(
                         Some(GroupTarget::OutOfGroup),
                         CombatEffect::Knockback(Knockback {
-                            strength: self.static_data.stage_data[stage_index].knockback,
+                            strength: self.static_data.stage_data[stage_index].knockback as f64,
                             direction: KnockbackDir::Away,
                         }),
                     )
@@ -283,8 +283,8 @@ impl CharacterBehavior for Data {
 
                     data.updater.insert(data.entity, Melee {
                         attack,
-                        range: self.static_data.stage_data[stage_index].range,
-                        max_angle: self.static_data.stage_data[stage_index].angle.to_radians(),
+                        range: self.static_data.stage_data[stage_index].range as f64,
+                        max_angle: self.static_data.stage_data[stage_index].angle.to_radians() as f64,
                         applied: false,
                         hit_count: 0,
                         break_block: data
@@ -303,7 +303,7 @@ impl CharacterBehavior for Data {
                     handle_orientation(
                         data,
                         &mut update,
-                        0.4 * self.static_data.ori_modifier,
+                        0.4 * self.static_data.ori_modifier as f64,
                         None,
                     );
 
@@ -333,7 +333,7 @@ impl CharacterBehavior for Data {
                     handle_orientation(
                         data,
                         &mut update,
-                        0.8 * self.static_data.ori_modifier,
+                        0.8 * self.static_data.ori_modifier as f64,
                         None,
                     );
                     // Recovers

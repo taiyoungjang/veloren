@@ -23,14 +23,14 @@ pub type SiteId = u64;
 
 pub enum LocalEvent {
     /// Applies upward force to entity's `Vel`
-    Jump(EcsEntity, f32),
+    Jump(EcsEntity, f64),
     /// Applies the `impulse` to `entity`'s `Vel`
     ApplyImpulse {
         entity: EcsEntity,
-        impulse: Vec3<f32>,
+        impulse: Vec3<f64>,
     },
     /// Applies `vel` velocity to `entity`
-    Boost { entity: EcsEntity, vel: Vec3<f32> },
+    Boost { entity: EcsEntity, vel: Vec3<f64> },
     /// Creates an outcome
     CreateOutcome(Outcome),
 }
@@ -41,12 +41,12 @@ pub enum LocalEvent {
 #[strum_discriminants(derive(strum::EnumVariantNames))]
 pub enum ServerEvent {
     Explosion {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         explosion: Explosion,
         owner: Option<Uid>,
     },
     Bonk {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         owner: Option<Uid>,
         target: Option<Uid>,
     },
@@ -83,7 +83,7 @@ pub enum ServerEvent {
     },
     Knockback {
         entity: EcsEntity,
-        impulse: Vec3<f32>,
+        impulse: Vec3<f64>,
     },
     BeamSegment {
         properties: comp::beam::Properties,
@@ -92,7 +92,7 @@ pub enum ServerEvent {
     },
     LandOnGround {
         entity: EcsEntity,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
     },
     EnableLantern(EcsEntity),
     DisableLantern(EcsEntity),
@@ -150,7 +150,7 @@ pub enum ServerEvent {
         agent: Option<comp::Agent>,
         rtsim_entity: Option<RtSimEntity>,
     },
-    CreateWaypoint(Vec3<f32>),
+    CreateWaypoint(Vec3<f64>),
     ClientDisconnect(EcsEntity, DisconnectReason),
     ClientDisconnectWithoutPersistence(EcsEntity),
     Command(EcsEntity, String, Vec<String>),
@@ -189,7 +189,7 @@ pub enum ServerEvent {
     TeleportTo {
         entity: EcsEntity,
         target: Uid,
-        max_range: Option<f32>,
+        max_range: Option<f64>,
     },
     CreateSafezone {
         range: Option<f32>,

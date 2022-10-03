@@ -163,7 +163,7 @@ pub(super) fn select_interactable(
         let closest_interactable_block_pos = Spiral2d::new()
             // TODO: this formula for the number to take was guessed
             // Note: assumes RECT_SIZE.x == RECT_SIZE.y
-            .take(((search_dist / TerrainChunk::RECT_SIZE.x as f32).ceil() as usize * 2 + 1).pow(2))
+            .take(((search_dist as f32 / TerrainChunk::RECT_SIZE.x as f32).ceil() as usize * 2 + 1).pow(2))
             .flat_map(|offset| {
                 let chunk_pos = player_chunk + offset;
                 let chunk_voxel_pos =
@@ -182,7 +182,7 @@ pub(super) fn select_interactable(
             .map(|(block_pos, interaction)| (
                     block_pos,
                     block_pos.map(|e| e as f32 + 0.5)
-                        .distance_squared(player_pos),
+                        .distance_squared(player_pos.map(|x|x as f32)),
                     interaction,
             ))
             .min_by_key(|(_, dist_sqr, _)| OrderedFloat(*dist_sqr))

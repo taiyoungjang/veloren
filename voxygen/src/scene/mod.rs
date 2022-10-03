@@ -445,7 +445,7 @@ impl Scene {
 
         match outcome {
             Outcome::Lightning { pos } => {
-                self.last_lightning = Some((*pos, scene_data.state.get_time()));
+                self.last_lightning = Some((pos.map(|x|x as f32), scene_data.state.get_time()));
             },
             Outcome::Explosion {
                 pos,
@@ -455,7 +455,7 @@ impl Scene {
                 ..
             } => self.event_lights.push(EventLight {
                 light: Light::new(
-                    *pos,
+                    pos.map(|x|x as f32),
                     match reagent {
                         Some(Reagent::Blue) => Rgb::new(0.15, 0.4, 1.0),
                         Some(Reagent::Green) => Rgb::new(0.0, 1.0, 0.0),
@@ -522,7 +522,7 @@ impl Scene {
             let is_running = ecs
                 .read_storage::<comp::Vel>()
                 .get(scene_data.viewpoint_entity)
-                .map(|v| v.0.magnitude_squared() > RUNNING_THRESHOLD.powi(2))
+                .map(|v| v.0.magnitude_squared() as f32 > RUNNING_THRESHOLD.powi(2))
                 .unwrap_or(false);
 
             let on_ground = ecs
@@ -549,26 +549,26 @@ impl Scene {
                 let q = viewpoint_ori;
                 let sinr_cosp = 2.0 * (q.w * q.x + q.y * q.z);
                 let cosr_cosp = 1.0 - 2.0 * (q.x * q.x + q.y * q.y);
-                let roll = sinr_cosp.atan2(cosr_cosp);
+                let roll = sinr_cosp.atan2(cosr_cosp) as f32;
 
                 let sinp = 2.0 * (q.w * q.y - q.z * q.x);
                 let pitch = if sinp.abs() >= 1.0 {
-                    std::f32::consts::FRAC_PI_2.copysign(sinp)
+                    std::f64::consts::FRAC_PI_2.copysign(sinp) as f32
                 } else {
-                    sinp.asin()
+                    sinp.asin() as f32
                 };
 
                 let siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
                 let cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
-                let yaw = siny_cosp.atan2(cosy_cosp);
+                let yaw = siny_cosp.atan2(cosy_cosp) as f32;
 
                 self.camera
                     .set_orientation_instant(Vec3::new(-yaw, pitch, roll));
             }
 
             // Alter camera position to match player.
-            let tilt = self.camera.get_orientation().y;
-            let dist = self.camera.get_distance();
+            let tilt = self.camera.get_orientation().y as f64;
+            let dist = self.camera.get_distance() as f64;
 
             let up = match self.camera.get_mode() {
                 CameraMode::FirstPerson => {
@@ -576,7 +576,7 @@ impl Scene {
                         viewpoint_height * 0.42
                     } else if is_running && on_ground.unwrap_or(false) {
                         viewpoint_eye_height
-                            + (scene_data.state.get_time() as f32 * 17.0).sin() * 0.05
+                            + (scene_data.state.get_time() as f64 * 17.0).sin() * 0.05
                     } else {
                         viewpoint_eye_height
                     }
@@ -659,7 +659,7 @@ impl Scene {
                 .map(|(pos, interpolated, light_anim, _)| {
                     // Use interpolated values if they are available
                     let pos = interpolated.map_or(pos.0, |i| i.pos);
-                    Light::new(pos + light_anim.offset, light_anim.col, light_anim.strength)
+                    Light::new(pos.map(|x|x as f32) + light_anim.offset.map(|x|x as f32), light_anim.col, light_anim.strength)
                 })
                 .chain(
                     self.event_lights
@@ -667,7 +667,7 @@ impl Scene {
                         .map(|el| el.light.with_strength((el.fadeout)(el.timeout))),
                 ),
         );
-        lights.sort_by_key(|light| light.get_pos().distance_squared(viewpoint_pos) as i32);
+        lights.sort_by_key(|light| light.get_pos().distance_squared(viewpoint_pos.map(|x|x as f32)) as i32);
         lights.truncate(MAX_LIGHT_COUNT);
         renderer.update_consts(&mut self.data.lights, lights);
 
@@ -698,12 +698,12 @@ impl Scene {
             .map(|(pos, interpolated, scale, _, _)| {
                 Shadow::new(
                     // Use interpolated values pos if it is available
-                    interpolated.map_or(pos.0, |i| i.pos),
-                    scale.map_or(1.0, |s| s.0),
+                    interpolated.map_or(pos.0.map(|x|x as f32), |i| i.pos.map(|x|x as f32)),
+                    scale.map_or(1.0, |s| s.0 as f32),
                 )
             })
             .collect::<Vec<_>>();
-        shadows.sort_by_key(|shadow| shadow.get_pos().distance_squared(viewpoint_pos) as i32);
+        shadows.sort_by_key(|shadow| shadow.get_pos().distance_squared(viewpoint_pos.map(|x|x as f32)) as i32);
         shadows.truncate(MAX_SHADOW_COUNT);
         renderer.update_consts(&mut self.data.shadows, &shadows);
 
@@ -719,8 +719,8 @@ impl Scene {
         renderer.update_consts(&mut self.data.globals, &[Globals::new(
             view_mat,
             proj_mat,
-            cam_pos,
-            focus_pos,
+            cam_pos.map(|x|x as f32),
+            focus_pos.map(|x|x as f32),
             self.loaded_distance,
             self.lod.get_data().tgt_detail as f32,
             self.map_bounds,
@@ -752,7 +752,7 @@ impl Scene {
         renderer.update_postprocess_locals(PostProcessLocals::new(proj_mat_inv, view_mat_inv));
 
         // Maintain LoD.
-        self.lod.maintain(renderer, client, focus_pos, &self.camera);
+        self.lod.maintain(renderer, client, focus_pos.map(|x|x as f32), &self.camera);
 
         // Maintain debug shapes
         self.debug.maintain(renderer);
@@ -767,7 +767,7 @@ impl Scene {
         ) = self.terrain.maintain(
             renderer,
             scene_data,
-            focus_pos,
+            focus_pos.map(|x|x as f32),
             self.loaded_distance,
             &self.camera,
         );
@@ -785,13 +785,13 @@ impl Scene {
 
         let fov = self.camera.get_effective_fov();
         let aspect_ratio = self.camera.get_aspect_ratio();
-        let view_dir = ((focus_pos.map(f32::fract)) - cam_pos).normalized();
+        let view_dir = ((focus_pos.map(f64::fract)) - cam_pos).normalized().map(|x|x as f32);
 
         // We need to compute these offset matrices to transform world space coordinates
         // to the translated ones we use when multiplying by the light space
         // matrix; this helps avoid precision loss during the
         // multiplication.
-        let look_at = math::Vec3::from(cam_pos);
+        let look_at = math::Vec3::from(cam_pos.map(|x|x as f32));
         let new_dir = math::Vec3::from(view_dir);
         let new_dir = new_dir.normalized();
         let up: math::Vec3<f32> = math::Vec3::unit_y();
@@ -1154,7 +1154,7 @@ impl Scene {
             shadow_mats.extend(lights.iter().flat_map(|light| {
                 // Now, construct the full projection matrix by making the light look at each
                 // cube face.
-                let eye = Vec3::new(light.pos[0], light.pos[1], light.pos[2]) - focus_off;
+                let eye = Vec3::new(light.pos[0], light.pos[1], light.pos[2]) - focus_off.map(|x|x as f32);
                 orientations.iter().map(move |&(forward, up)| {
                     // NOTE: We don't currently try to linearize point lights or need a separate
                     // transform for them.
@@ -1213,7 +1213,7 @@ impl Scene {
                 if let Some(mut shadow_pass) = drawer.shadow_pass() {
                     // Render terrain directed shadows.
                     self.terrain
-                        .render_shadows(&mut shadow_pass.draw_terrain_shadows(), focus_pos);
+                        .render_shadows(&mut shadow_pass.draw_terrain_shadows(), focus_pos.map(|x|x as f32));
 
                     // Render figure directed shadows.
                     self.figure_mgr.render_shadows(
@@ -1230,7 +1230,7 @@ impl Scene {
                 prof_span!("point shadows");
                 drawer.draw_point_shadows(
                     &self.data.point_light_matrices,
-                    self.terrain.chunks_for_point_shadows(focus_pos),
+                    self.terrain.chunks_for_point_shadows(focus_pos.map(|x|x as f32)),
                 )
             }
         }
@@ -1239,7 +1239,7 @@ impl Scene {
             prof_span!("rain occlusion");
             if let Some(mut occlusion_pass) = drawer.rain_occlusion_pass() {
                 self.terrain
-                    .render_rain_occlusion(&mut occlusion_pass.draw_terrain_shadows(), cam_pos);
+                    .render_rain_occlusion(&mut occlusion_pass.draw_terrain_shadows(), cam_pos.map(|x|x as f32));
 
                 self.figure_mgr.render_rain_occlusion(
                     &mut occlusion_pass.draw_figure_shadows(),
@@ -1260,7 +1260,7 @@ impl Scene {
                 camera_data,
             );
 
-            self.terrain.render(&mut first_pass, focus_pos);
+            self.terrain.render(&mut first_pass, focus_pos.map(|x|x as f32));
 
             self.figure_mgr.render(
                 &mut first_pass.draw_figures(),
@@ -1278,8 +1278,8 @@ impl Scene {
             // Draws translucent terrain and sprites
             self.terrain.render_translucent(
                 &mut first_pass,
-                focus_pos,
-                cam_pos,
+                focus_pos.map(|x|x as f32),
+                cam_pos.map(|x|x as f32),
                 scene_data.sprite_render_distance,
             );
 
@@ -1326,13 +1326,13 @@ impl Scene {
                         current_entities.insert(entity);
                         let shape_id = hitboxes.entry(entity).or_insert_with(|| {
                             self.debug.add_shape(DebugShape::CapsulePrism {
-                                p0: *p0,
-                                p1: *p1,
-                                radius: *radius,
-                                height: *z_max - *z_min,
+                                p0: p0.map(|x|x as f32),
+                                p1: p1.map(|x|x as f32),
+                                radius: *radius as f32,
+                                height: *z_max as f32 - *z_min as f32,
                             })
                         });
-                        let hb_pos = [pos.0.x, pos.0.y, pos.0.z + *z_min, 0.0];
+                        let hb_pos = [pos.0.x as f32, pos.0.y as f32, pos.0.z as f32 + *z_min as f32, 0.0];
                         let color = if group == Some(&comp::group::ENEMY) {
                             [1.0, 0.0, 0.0, 0.5]
                         } else if group == Some(&comp::group::NPC) {
@@ -1341,7 +1341,7 @@ impl Scene {
                             [0.0, 1.0, 0.0, 0.5]
                         };
                         let ori = ori.to_quat();
-                        let hb_ori = [ori.x, ori.y, ori.z, ori.w];
+                        let hb_ori = [ori.x as f32, ori.y as f32, ori.z as f32, ori.w as f32];
                         self.debug.set_context(*shape_id, hb_pos, color, hb_ori);
                     },
                     comp::Collider::Voxel { .. }

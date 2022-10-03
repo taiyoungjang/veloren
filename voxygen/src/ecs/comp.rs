@@ -30,7 +30,7 @@ impl Component for HpFloaterList {
 // position
 #[derive(Copy, Clone, Debug)]
 pub struct Interpolated {
-    pub pos: Vec3<f32>,
+    pub pos: Vec3<f64>,
     pub ori: Ori,
 }
 impl Component for Interpolated {

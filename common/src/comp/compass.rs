@@ -15,7 +15,7 @@ pub enum Direction {
 impl Direction {
     /// Convert a direction vector to a cardinal direction
     /// Direction vector can be trivially calculated by doing (target - source)
-    pub fn from_dir(dir: Vec2<f32>) -> Self {
+    pub fn from_dir(dir: Vec2<f64>) -> Self {
         if let Some(dir) = dir.try_normalized() {
             let mut angle = dir.angle_between(Vec2::unit_y()).to_degrees();
             if dir.x < 0.0 {
@@ -75,7 +75,7 @@ impl Distance {
     }
 
     /// Convert a vector to a Distance
-    pub fn from_dir(dir: Vec2<f32>) -> Self { Self::from_length(dir.magnitude() as i32) }
+    pub fn from_dir(dir: Vec2<f64>) -> Self { Self::from_length(dir.magnitude() as i32) }
 
     // TODO: localization
     pub fn name(&self) -> &'static str {

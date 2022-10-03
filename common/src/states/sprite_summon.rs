@@ -100,8 +100,8 @@ impl CharacterBehavior for Data {
                                 let obstacle_z = data
                                     .terrain
                                     .ray(
-                                        sprite_pos.map(|x| x as f32 + 0.5) + Vec3::unit_z() * 10.0,
-                                        sprite_pos.map(|x| x as f32 + 0.5) - Vec3::unit_z() * 10.0,
+                                        sprite_pos.map(|x| x as f64 + 0.5) + Vec3::unit_z() * 10.0,
+                                        sprite_pos.map(|x| x as f64 + 0.5) - Vec3::unit_z() * 10.0,
                                     )
                                     .until(|b| {
                                         // Until reaching a solid block that is not the created

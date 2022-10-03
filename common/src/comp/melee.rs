@@ -16,8 +16,8 @@ use vek::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Melee {
     pub attack: Attack,
-    pub range: f32,
-    pub max_angle: f32,
+    pub range: f64,
+    pub max_angle: f64,
     pub applied: bool,
     pub hit_count: u32,
     pub break_block: Option<(Vec3<i32>, Option<ToolKind>)>,
@@ -43,8 +43,8 @@ pub struct MeleeConstructor {
     pub kind: MeleeConstructorKind,
     // This multiplied by a fraction is added to what is specified in kind
     pub scaled: Option<MeleeConstructorKind>,
-    pub range: f32,
-    pub angle: f32,
+    pub range: f64,
+    pub angle: f64,
     pub damage_effect: Option<CombatEffect>,
 }
 
@@ -287,8 +287,9 @@ impl MeleeConstructor {
     }
 
     #[must_use]
-    pub fn handle_scaling(mut self, scaling: f32) -> Self {
-        let scale_values = |a, b| a + b * scaling;
+    pub fn handle_scaling(mut self, scaling: f64) -> Self {
+        let scale_values64 = |a: f64, b: f64| a + b * scaling;
+        let scale_values = |a: f32, b: f32| a + b * scaling as f32;
 
         if let Some(max_scale) = self.scaled {
             use MeleeConstructorKind::*;
@@ -307,9 +308,9 @@ impl MeleeConstructor {
                         energy_regen: b_energy_regen,
                     },
                 ) => Slash {
-                    damage: scale_values(a_damage, b_damage),
+                    damage: scale_values(a_damage, b_damage ),
                     poise: scale_values(a_poise, b_poise),
-                    knockback: scale_values(a_knockback, b_knockback),
+                    knockback: scale_values64(a_knockback, b_knockback),
                     energy_regen: scale_values(a_energy_regen, b_energy_regen),
                 },
                 (
@@ -328,7 +329,7 @@ impl MeleeConstructor {
                 ) => Stab {
                     damage: scale_values(a_damage, b_damage),
                     poise: scale_values(a_poise, b_poise),
-                    knockback: scale_values(a_knockback, b_knockback),
+                    knockback: scale_values64(a_knockback, b_knockback),
                     energy_regen: scale_values(a_energy_regen, b_energy_regen),
                 },
                 (
@@ -347,7 +348,7 @@ impl MeleeConstructor {
                 ) => Bash {
                     damage: scale_values(a_damage, b_damage),
                     poise: scale_values(a_poise, b_poise),
-                    knockback: scale_values(a_knockback, b_knockback),
+                    knockback: scale_values64(a_knockback, b_knockback),
                     energy_regen: scale_values(a_energy_regen, b_energy_regen),
                 },
                 (
@@ -363,7 +364,7 @@ impl MeleeConstructor {
                     },
                 ) => NecroticVortex {
                     damage: scale_values(a_damage, b_damage),
-                    pull: scale_values(a_pull, b_pull),
+                    pull: scale_values64(a_pull, b_pull),
                     lifesteal: scale_values(a_lifesteal, b_lifesteal),
                 },
                 (
@@ -380,7 +381,7 @@ impl MeleeConstructor {
                 ) => SonicWave {
                     damage: scale_values(a_damage, b_damage),
                     poise: scale_values(a_poise, b_poise),
-                    knockback: scale_values(a_knockback, b_knockback),
+                    knockback: scale_values64(a_knockback, b_knockback),
                 },
                 _ => {
                     dev_panic!(
@@ -400,7 +401,7 @@ impl MeleeConstructor {
 
     #[must_use]
     pub fn adjusted_by_stats(mut self, stats: Stats, regen: f32) -> Self {
-        self.range *= stats.range;
+        self.range *= stats.range as f64;
         self.kind = self.kind.adjusted_by_stats(stats, regen);
         if let Some(ref mut scaled) = &mut self.scaled {
             *scaled = scaled.adjusted_by_stats(stats, regen);
@@ -418,30 +419,30 @@ pub enum MeleeConstructorKind {
     Slash {
         damage: f32,
         poise: f32,
-        knockback: f32,
+        knockback: f64,
         energy_regen: f32,
     },
     Stab {
         damage: f32,
         poise: f32,
-        knockback: f32,
+        knockback: f64,
         energy_regen: f32,
     },
     Bash {
         damage: f32,
         poise: f32,
-        knockback: f32,
+        knockback: f64,
         energy_regen: f32,
     },
     NecroticVortex {
         damage: f32,
-        pull: f32,
+        pull: f64,
         lifesteal: f32,
     },
     SonicWave {
         damage: f32,
         poise: f32,
-        knockback: f32,
+        knockback: f64,
     },
 }
 

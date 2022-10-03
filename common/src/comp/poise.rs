@@ -20,7 +20,7 @@ pub struct PoiseChange {
     pub amount: f32,
     /// The direction that the poise change came from, used for when the target
     /// is knocked down
-    pub impulse: Vec3<f32>,
+    pub impulse: Vec3<f64>,
     /// The individual or group who caused the poise change (None if the
     /// damage wasn't caused by an entity)
     pub by: Option<DamageContributor>,

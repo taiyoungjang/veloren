@@ -81,19 +81,19 @@ impl<'a> AgentData<'a> {
         &self,
         agent: &mut Agent,
         controller: &mut Controller,
-        tgt_pos: Vec3<f32>,
+        tgt_pos: Vec3<f64>,
         read_data: &ReadData,
         path: Path,
-        speed_multiplier: Option<f32>,
+        speed_multiplier: Option<f64>,
     ) -> bool {
-        let partial_path_tgt_pos = |pos_difference: Vec3<f32>| {
+        let partial_path_tgt_pos = |pos_difference: Vec3<f64>| {
             self.pos.0
                 + PARTIAL_PATH_DIST * pos_difference.try_normalized().unwrap_or_else(Vec3::zero)
         };
         let pos_difference = tgt_pos - self.pos.0;
         let pathing_pos = match path {
             Path::Separate => {
-                let mut sep_vec: Vec3<f32> = Vec3::<f32>::zero();
+                let mut sep_vec: Vec3<f64> = Vec3::<f64>::zero();
 
                 for entity in read_data
                     .cached_spatial_grid
@@ -283,7 +283,7 @@ impl<'a> AgentData<'a> {
                             if let Some(dir) = Lerp::lerp(
                                 -Vec3::unit_z(),
                                 Vec3::new(bearing.x, bearing.y, 0.0),
-                                i as f32 / NUM_RAYS as f32,
+                                i as f64 / NUM_RAYS as f64,
                             )
                             .try_normalized()
                             {
@@ -322,7 +322,7 @@ impl<'a> AgentData<'a> {
                 }
             }
         } else {
-            agent.bearing += Vec2::new(rng.gen::<f32>() - 0.5, rng.gen::<f32>() - 0.5) * 0.1
+            agent.bearing += Vec2::new(rng.gen::<f64>() - 0.5, rng.gen::<f64>() - 0.5) * 0.1
                 - agent.bearing * 0.003
                 - agent.patrol_origin.map_or(Vec2::zero(), |patrol_origin| {
                     (self.pos.0 - patrol_origin).xy() * 0.0002
@@ -370,7 +370,7 @@ impl<'a> AgentData<'a> {
                     0.0
                 };
 
-            if agent.bearing.magnitude_squared() > 0.5f32.powi(2) {
+            if agent.bearing.magnitude_squared() > 0.5f64.powi(2) {
                 controller.inputs.move_dir = agent.bearing * 0.65;
             }
 
@@ -654,7 +654,7 @@ impl<'a> AgentData<'a> {
         };
 
         let can_sense_directly_near =
-            { |e_pos: &Pos| e_pos.0.distance_squared(self.pos.0) < 5_f32.powi(2) };
+            { |e_pos: &Pos| e_pos.0.distance_squared(self.pos.0) < 5_f64.powi(2) };
 
         let is_detected = |entity: EcsEntity, e_pos: &Pos| {
             let chance = thread_rng().gen_bool(0.3);
@@ -888,8 +888,8 @@ impl<'a> AgentData<'a> {
             CharacterState::ChargedRanged(c) if dist_sqrd > 0.0 => {
                 let charge_factor =
                     c.timer.as_secs_f32() / c.static_data.charge_duration.as_secs_f32();
-                let projectile_speed = c.static_data.initial_projectile_speed
-                    + charge_factor * c.static_data.scaled_projectile_speed;
+                let projectile_speed = c.static_data.initial_projectile_speed as f64
+                    + charge_factor as f64 * c.static_data.scaled_projectile_speed as f64;
                 aim_projectile(
                     projectile_speed,
                     self.pos.0
@@ -914,7 +914,7 @@ impl<'a> AgentData<'a> {
                     } => 0.0,
                     _ => tgt_eye_offset,
                 };
-                let projectile_speed = c.static_data.projectile_speed;
+                let projectile_speed = c.static_data.projectile_speed as f64;
                 aim_projectile(
                     projectile_speed,
                     self.pos.0
@@ -929,7 +929,7 @@ impl<'a> AgentData<'a> {
                 )
             },
             CharacterState::RepeaterRanged(c) => {
-                let projectile_speed = c.static_data.projectile_speed;
+                let projectile_speed = c.static_data.projectile_speed as f64;
                 aim_projectile(
                     projectile_speed,
                     self.pos.0
@@ -1238,7 +1238,7 @@ impl<'a> AgentData<'a> {
             // dissipates as it travels, but we will not want to flee if a sound is super
             // loud but heard from a great distance, regardless of how loud it was.
             // `is_close` is this limiter.
-            let is_close = dist_sqrd < 35.0_f32.powi(2);
+            let is_close = dist_sqrd < 35.0_f64.powi(2);
 
             let sound_was_loud = sound.vol >= 10.0;
             let sound_was_threatening = sound_was_loud
@@ -1411,7 +1411,7 @@ impl<'a> AgentData<'a> {
                 // them quickly flip aggro between two players.
                 // It does this by only switching aggro if the entity is closer to the enemy by
                 // a specific proportional threshold.
-                const FUZZY_DIST_COMPARISON: f32 = 0.8;
+                const FUZZY_DIST_COMPARISON: f64 = 0.8;
 
                 let is_target_further = target_pos.0.distance(entity_pos.0)
                     < target_pos.0.distance(entity_pos.0) * FUZZY_DIST_COMPARISON;
@@ -1485,7 +1485,7 @@ impl<'a> AgentData<'a> {
         };
 
         let within_sight_dist = {
-            let sight_dist = agent.psyche.sight_dist * other_stealth_multiplier;
+            let sight_dist = agent.psyche.sight_dist * other_stealth_multiplier as f64;
             let dist_sqrd = other_pos.0.distance_squared(self.pos.0);
 
             dist_sqrd < sight_dist.powi(2)

@@ -5,8 +5,8 @@ pub trait RayForEach<V> = FnMut(&V, Vec3<i32>);
 
 pub struct Ray<'a, V: ReadVol, F: FnMut(&V::Vox) -> bool, G: RayForEach<V::Vox>> {
     vol: &'a V,
-    from: Vec3<f32>,
-    to: Vec3<f32>,
+    from: Vec3<f64>,
+    to: Vec3<f64>,
     until: F,
     for_each: Option<G>,
     max_iter: usize,
@@ -19,7 +19,7 @@ where
     F: FnMut(&V::Vox) -> bool,
     G: RayForEach<V::Vox>,
 {
-    pub fn new(vol: &'a V, from: Vec3<f32>, to: Vec3<f32>, until: F) -> Self {
+    pub fn new(vol: &'a V, from: Vec3<f64>, to: Vec3<f64>, until: F) -> Self {
         Self {
             vol,
             from,
@@ -67,10 +67,10 @@ where
         self
     }
 
-    pub fn cast(mut self) -> (f32, Result<Option<&'a V::Vox>, V::Error>) {
+    pub fn cast(mut self) -> (f64, Result<Option<&'a V::Vox>, V::Error>) {
         // TODO: Fully test this!
 
-        const PLANCK: f32 = 0.001;
+        const PLANCK: f64 = 0.001;
 
         let mut dist = 0.0;
         let dir = (self.to - self.from).normalized();
@@ -103,7 +103,7 @@ where
             let deltas =
                 (dir.map(|e| if e < 0.0 { 0.0 } else { 1.0 }) - pos.map(|e| e.abs().fract())) / dir;
 
-            dist += deltas.reduce(f32::min).max(PLANCK);
+            dist += deltas.reduce(f64::min).max(PLANCK);
         }
 
         (dist, Ok(None))

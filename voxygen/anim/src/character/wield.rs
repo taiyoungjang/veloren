@@ -107,7 +107,7 @@ impl Animation for WieldAnimation {
             next.head.orientation =
                 Quaternion::rotation_z(tilt * -0.5 + strafe * 0.4 * direction + strafe * -0.7)
                     * Quaternion::rotation_x(
-                        (0.3 - direction * 0.4) * (1.0 - tilt.abs()) + look_dir.z * 0.7,
+                        (0.3 - direction * 0.4) * (1.0 - tilt.abs()) + look_dir.z as f32 * 0.7,
                     );
 
             next.chest.position =
@@ -115,7 +115,7 @@ impl Animation for WieldAnimation {
         } else {
             next.head.position = Vec3::new(0.0, s_a.head.0, s_a.head.1 + u_slow * 0.1);
             next.head.orientation = Quaternion::rotation_z(head_look.x + tilt * -0.75)
-                * Quaternion::rotation_x(head_look.y.abs() + look_dir.z * 0.7);
+                * Quaternion::rotation_x(head_look.y.abs() + look_dir.z as f32 * 0.7);
 
             next.chest.position = Vec3::new(slowalt * 0.5, s_a.chest.0, s_a.chest.1 + u_slow * 0.5);
             next.belt.orientation = Quaternion::rotation_z(0.15 + beltstatic * tilt * 0.1);
@@ -173,7 +173,7 @@ impl Animation for WieldAnimation {
                         next.head.position =
                             Vec3::new(0.0, 0.0 + s_a.head.0, s_a.head.1 + u_slow * 0.1);
                         next.head.orientation = Quaternion::rotation_z(head_look.x)
-                            * Quaternion::rotation_x(0.35 + head_look.y.abs() + look_dir.z * 0.7);
+                            * Quaternion::rotation_x(0.35 + head_look.y.abs() + look_dir.z as f32 * 0.7);
                         next.chest.orientation = Quaternion::rotation_x(-0.35)
                             * Quaternion::rotation_y(u_slowalt * 0.04)
                             * Quaternion::rotation_z(0.15);
@@ -267,7 +267,7 @@ impl Animation for WieldAnimation {
                 Some(ToolKind::Farming) => {
                     if speed < 0.5 {
                         next.head.orientation = Quaternion::rotation_z(head_look.x)
-                            * Quaternion::rotation_x(-0.2 + head_look.y.abs() + look_dir.z * 0.7);
+                            * Quaternion::rotation_x(-0.2 + head_look.y.abs() + look_dir.z as f32 * 0.7);
                     }
                     next.hand_l.position = Vec3::new(9.0, 1.0, 1.0);
                     next.hand_l.orientation = Quaternion::rotation_x(PI / 2.0);
@@ -288,7 +288,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(0.0, 2.0, -4.0);
@@ -309,7 +309,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(-1.0, 4.0, -1.0);
@@ -331,7 +331,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(-6.0, 5.0, -5.0);
@@ -356,7 +356,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(0.0, 2.0, -4.0);
@@ -377,7 +377,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(0.0, 2.0, -4.0);
@@ -399,7 +399,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(-2.0, 5.0, -5.0);
@@ -424,7 +424,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(0.0, 5.0, -4.0);
@@ -449,7 +449,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(-1.0, 3.0, -2.0);
@@ -475,7 +475,7 @@ impl Animation for WieldAnimation {
                                 if speed < 0.5 {
                                     next.head.orientation = Quaternion::rotation_z(head_look.x)
                                         * Quaternion::rotation_x(
-                                            0.0 + head_look.y.abs() + look_dir.z * 0.7,
+                                            0.0 + head_look.y.abs() + look_dir.z as f32 * 0.7,
                                         );
                                 }
                                 next.hand_l.position = Vec3::new(-1.0, 5.0, -2.5);

@@ -234,7 +234,7 @@ pub fn handle_mine_block(
                 }
                 let item_drop = state
                     .create_item_drop(Default::default(), item)
-                    .with(Pos(pos.map(|e| e as f32) + Vec3::new(0.5, 0.5, 0.0)));
+                    .with(Pos(pos.map(|e| e as f64) + Vec3::new(0.5, 0.5, 0.0)));
                 if let Some(uid) = maybe_uid {
                     item_drop.with(LootOwner::new(LootOwnerKind::Player(uid)))
                 } else {
@@ -267,7 +267,7 @@ pub fn handle_sound(server: &mut Server, sound: &Sound) {
         let agent_dist_sqrd = agent_pos.0.distance_squared(sound.pos);
         let sound_travel_dist_sqrd = (sound.vol * SOUND_TRAVEL_DIST_PER_VOLUME).powi(2);
 
-        let vol_dropoff = agent_dist_sqrd / sound_travel_dist_sqrd * sound.vol;
+        let vol_dropoff = agent_dist_sqrd as f32 / sound_travel_dist_sqrd * sound.vol;
         let propagated_sound = sound.with_new_vol(sound.vol - vol_dropoff);
 
         let can_hear_sound = propagated_sound.vol > 0.00;

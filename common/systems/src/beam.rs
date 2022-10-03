@@ -119,9 +119,9 @@ impl<'a> System<'a> for Sys {
                     // Note: min() probably unneeded
                     let time_since_creation = (time - creation_time) as f32;
                     let frame_start_dist =
-                        (beam_segment.speed * (time_since_creation - frame_time)).max(0.0);
+                        (beam_segment.speed as f64* (time_since_creation as f64- frame_time as f64)).max(0.0);
                     let frame_end_dist =
-                        (beam_segment.speed * time_since_creation).max(frame_start_dist);
+                        (beam_segment.speed as f64 * time_since_creation as f64).max(frame_start_dist);
 
                     // Group to ignore collisions with
                     // Might make this more nuanced if beams are used for non damage effects
@@ -137,7 +137,7 @@ impl<'a> System<'a> for Sys {
                     let target_iter = read_data
                         .cached_spatial_grid
                         .0
-                        .in_circle_aabr(pos.0.xy(), frame_end_dist - frame_start_dist)
+                        .in_circle_aabr(pos.0.xy(), frame_end_dist as f64 - frame_start_dist as f64)
                         .filter_map(|target| {
                             read_data
                                 .positions
@@ -169,7 +169,7 @@ impl<'a> System<'a> for Sys {
                                 frame_start_dist,
                                 frame_end_dist,
                                 *ori.look_dir(),
-                                beam_segment.angle,
+                                beam_segment.angle as f64,
                                 pos_b.0,
                                 rad_b,
                                 height_b,
@@ -313,15 +313,15 @@ impl<'a> System<'a> for Sys {
 /// See page 12 of https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.396.7952&rep=rep1&type=pdf
 fn sphere_wedge_cylinder_collision(
     // Values for spherical wedge
-    real_pos: Vec3<f32>,
-    min_rad: f32, // Distance from beam origin to inner section of beam
-    max_rad: f32, //Distance from beam origin to outer section of beam
-    ori: Vec3<f32>,
-    angle: f32,
+    real_pos: Vec3<f64>,
+    min_rad: f64, // Distance from beam origin to inner section of beam
+    max_rad: f64, //Distance from beam origin to outer section of beam
+    ori: Vec3<f64>,
+    angle: f64,
     // Values for cylinder
-    bottom_pos_b: Vec3<f32>, // Position of bottom of cylinder
-    rad_b: f32,
-    length_b: f32,
+    bottom_pos_b: Vec3<f64>, // Position of bottom of cylinder
+    rad_b: f64,
+    length_b: f64,
 ) -> bool {
     // Converts all coordinates so that the new origin is in the center of the
     // cylinder
@@ -338,13 +338,13 @@ fn sphere_wedge_cylinder_collision(
         false
     } else if pos.z.abs() <= length_b / 2.0 {
         // Checks case 1: center of sphere is on same z-height as cylinder
-        let pos2 = Vec2::<f32>::from(pos);
+        let pos2 = Vec2::<f64>::from(pos);
         let ori2 = Vec2::from(ori);
         let distance = pos2.distance(Vec2::zero());
         let in_range = distance < max_rad && distance > min_rad;
         // Done so that if distance = 0, atan() can still be calculated https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=6d2221bb9454debdfca8f9c52d1edb29
-        let tangent_value1: f32 = rad_b / distance;
-        let tangent_value2: f32 = length_b / 2.0 / distance;
+        let tangent_value1: f64 = rad_b / distance;
+        let tangent_value2: f64 = length_b / 2.0 / distance;
         let in_angle = pos2.angle_between(-ori2) < angle + (tangent_value1).atan().abs()
             && pos.angle_between(-ori) < angle + (tangent_value2).atan().abs();
         in_range && in_angle

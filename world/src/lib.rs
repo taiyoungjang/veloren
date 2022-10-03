@@ -213,7 +213,7 @@ impl World {
         index: IndexRef,
         spawn_wpos: Vec2<i32>,
         ascending: bool,
-    ) -> Vec3<f32> {
+    ) -> Vec3<f64> {
         let chunk_pos = TerrainGrid::chunk_key(spawn_wpos);
 
         // Unwrapping because generate_chunk only returns err when should_continue evals

@@ -9,7 +9,7 @@ use std::collections::BinaryHeap;
 
 #[derive(Copy, Clone, Debug)]
 pub struct PathEntry<S> {
-    cost: f32,
+    cost: f64,
     node: S,
 }
 
@@ -53,11 +53,11 @@ pub struct Astar<S, Hasher> {
     max_iters: usize,
     potential_nodes: BinaryHeap<PathEntry<S>>,
     came_from: HashMap<S, S, Hasher>,
-    cheapest_scores: HashMap<S, f32, Hasher>,
-    final_scores: HashMap<S, f32, Hasher>,
+    cheapest_scores: HashMap<S, f64, Hasher>,
+    final_scores: HashMap<S, f64, Hasher>,
     visited: HashSet<S, Hasher>,
     cheapest_node: Option<S>,
-    cheapest_cost: Option<f32>,
+    cheapest_cost: Option<f64>,
 }
 
 /// NOTE: Must manually derive since Hasher doesn't implement it.
@@ -78,7 +78,7 @@ impl<S: Clone + Eq + Hash + fmt::Debug, H: BuildHasher> fmt::Debug for Astar<S, 
 }
 
 impl<S: Clone + Eq + Hash, H: BuildHasher + Clone> Astar<S, H> {
-    pub fn new(max_iters: usize, start: S, heuristic: impl FnOnce(&S) -> f32, hasher: H) -> Self {
+    pub fn new(max_iters: usize, start: S, heuristic: impl FnOnce(&S) -> f64, hasher: H) -> Self {
         Self {
             max_iters,
             iter: 0,
@@ -111,9 +111,9 @@ impl<S: Clone + Eq + Hash, H: BuildHasher + Clone> Astar<S, H> {
     pub fn poll<I>(
         &mut self,
         iters: usize,
-        mut heuristic: impl FnMut(&S) -> f32,
+        mut heuristic: impl FnMut(&S) -> f64,
         mut neighbors: impl FnMut(&S) -> I,
-        mut transition: impl FnMut(&S, &S) -> f32,
+        mut transition: impl FnMut(&S, &S) -> f64,
         mut satisfied: impl FnMut(&S) -> bool,
     ) -> PathResult<S>
     where
@@ -126,9 +126,9 @@ impl<S: Clone + Eq + Hash, H: BuildHasher + Clone> Astar<S, H> {
                     return PathResult::Path(self.reconstruct_path_to(node));
                 } else {
                     for neighbor in neighbors(&node) {
-                        let node_cheapest = self.cheapest_scores.get(&node).unwrap_or(&f32::MAX);
+                        let node_cheapest = self.cheapest_scores.get(&node).unwrap_or(&f64::MAX);
                         let neighbor_cheapest =
-                            self.cheapest_scores.get(&neighbor).unwrap_or(&f32::MAX);
+                            self.cheapest_scores.get(&neighbor).unwrap_or(&f64::MAX);
 
                         let cost = node_cheapest + transition(&node, &neighbor);
                         if cost < *neighbor_cheapest {
@@ -176,7 +176,7 @@ impl<S: Clone + Eq + Hash, H: BuildHasher + Clone> Astar<S, H> {
         }
     }
 
-    pub fn get_cheapest_cost(&self) -> Option<f32> { self.cheapest_cost }
+    pub fn get_cheapest_cost(&self) -> Option<f64> { self.cheapest_cost }
 
     fn reconstruct_path_to(&mut self, end: S) -> Path<S> {
         let mut path = vec![end.clone()];

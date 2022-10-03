@@ -82,7 +82,7 @@ pub enum ClientGeneral {
     RequestSiteInfo(SiteId),
     UpdateMapMarker(comp::MapMarkerChange),
 
-    SpectatePosition(Vec3<f32>),
+    SpectatePosition(Vec3<f64>),
     //Only in Game, via terrain stream
     TerrainChunkRequest {
         key: Vec2<i32>,

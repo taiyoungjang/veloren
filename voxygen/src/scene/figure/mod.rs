@@ -570,7 +570,7 @@ impl FigureMgr {
                 .and_then(|state| {
                     // Calculate the correct lantern position
                     let pos = anim::vek::Vec3::from(
-                        interpolated.map(|i| i.pos).unwrap_or(pos.0).into_array(),
+                        interpolated.map(|i| i.pos.map(|x|x as f32) ).unwrap_or(pos.0.map(|x|x as f32) ).into_array(),
                     );
                     Some(
                         state.mount_world_pos
@@ -580,7 +580,7 @@ impl FigureMgr {
                     )
                 })
             {
-                light_anim.offset = vek::Vec3::from(lantern_offset);
+                light_anim.offset = vek::Vec3::from(lantern_offset.map(|x|x as f64) );
             } else if let Some(body) = body {
                 light_anim.offset = body.default_light_offset();
             }
@@ -653,11 +653,11 @@ impl FigureMgr {
             // Are shadows enabled at all?
             let can_shadow_sun = renderer.pipeline_modes().shadow.is_map() && is_daylight;
 
-            let weather = scene_data.state.weather_at(cam_pos.xy());
+            let weather = scene_data.state.weather_at(cam_pos.xy().map(|x|x as f64) );
 
-            let cam_pos = math::Vec3::from(cam_pos);
+            let cam_pos = math::Vec3::from(cam_pos.map(|x| x as f32));
 
-            let focus_off = math::Vec3::from(camera.get_focus_pos().map(f32::trunc));
+            let focus_off = math::Vec3::from(camera.get_focus_pos().map(|x|x as f32).map(f32::trunc));
             let focus_off_mat = math::Mat4::translation_3d(-focus_off);
 
             let collides_with_aabr = |a: math::Aabr<f32>, b: math::Aabr<f32>| {
@@ -672,7 +672,7 @@ impl FigureMgr {
             let can_shadow = |ray_direction: Vec3<f32>,
                               enabled: bool,
                               visible_bounds: math::Aabr<f32>| {
-                let ray_direction = math::Vec3::from(ray_direction);
+                let ray_direction = math::Vec3::from(ray_direction.map(|x| x as f32));
                 // Transform (semi) world space to light space.
                 let ray_mat: math::Mat4<f32> =
                     math::Mat4::look_at_rh(cam_pos, cam_pos + ray_direction, math::Vec3::unit_y());
@@ -708,7 +708,7 @@ impl FigureMgr {
         let player_pos = ecs
             .read_storage::<Pos>()
             .get(scene_data.viewpoint_entity)
-            .map_or(anim::vek::Vec3::zero(), |pos| anim::vek::Vec3::from(pos.0));
+            .map_or(anim::vek::Vec3::zero(), |pos| anim::vek::Vec3::from(pos.0.map(|x|x as f32)));
         let visible_aabb = anim::vek::Aabb {
             min: player_pos - 2.0,
             max: player_pos + 2.0,
@@ -718,7 +718,7 @@ impl FigureMgr {
         let slow_jobs = state.slow_job_pool();
         let character_state = character_state_storage.get(scene_data.viewpoint_entity);
 
-        let focus_pos = anim::vek::Vec3::<f32>::from(camera.get_focus_pos());
+        let focus_pos = anim::vek::Vec3::<f64>::from(camera.get_focus_pos());
 
         let mut update_buf = [Default::default(); anim::MAX_BONE_COUNT];
 
@@ -768,7 +768,7 @@ impl FigureMgr {
             .enumerate()
         {
             // Velocity relative to the current ground
-            let rel_vel = anim::vek::Vec3::<f32>::from(vel.0 - physics.ground_vel);
+            let rel_vel = anim::vek::Vec3::<f32>::from( (vel.0 - physics.ground_vel).map(|x|x as f32));
 
             let look_dir = controller.map(|c| c.inputs.look_dir).unwrap_or_default();
             let is_viewpoint = scene_data.viewpoint_entity == entity;
@@ -782,15 +782,18 @@ impl FigureMgr {
             let (pos, ori) = interpolated
                 .map(|i| {
                     (
-                        (anim::vek::Vec3::from(i.pos),),
-                        anim::vek::Quaternion::<f32>::from(i.ori),
+                        (anim::vek::Vec3::from(i.pos.map(|x|x as f32) ),),
+                        {
+                            let q = anim::vek::Quaternion::<f64>::from( i.ori );
+                            anim::vek::Quaternion::<f32>::from_xyzw(q.x as f32,q.y as f32,q.z as f32, q.w as f32)
+                        },
                     )
                 })
                 .unwrap_or((
-                    (anim::vek::Vec3::<f32>::from(pos.0),),
+                    (anim::vek::Vec3::<f32>::from(pos.0.map(|x|x as f32)),),
                     anim::vek::Quaternion::<f32>::default(),
                 ));
-            let wall_dir = physics.on_wall.map(anim::vek::Vec3::from);
+            let wall_dir = physics.on_wall.map(|x| anim::vek::Vec3::from(x.map(|x|x as f32) ) );
             // Maintaining figure data and sending new figure data to the GPU turns out to
             // be a very expensive operation. We want to avoid doing it as much
             // as possible, so we make the assumption that players don't care so
@@ -801,7 +804,7 @@ impl FigureMgr {
             const MIN_PERFECT_RATE_DIST: f32 = 100.0;
 
             if (i as u64 + tick)
-                % (((pos.0.distance_squared(focus_pos).powf(0.25) - MIN_PERFECT_RATE_DIST.sqrt())
+                % (((pos.0.distance_squared(focus_pos.map(|x|x as f32) ).powf(0.25) - MIN_PERFECT_RATE_DIST.sqrt())
                     .max(0.0)
                     / 3.0) as u64)
                     .saturating_add(1)
@@ -818,10 +821,10 @@ impl FigureMgr {
                 .unwrap_or(false);
 
             // Don't process figures outside the vd
-            let vd_frac = anim::vek::Vec2::from(pos.0 - player_pos)
+            let vd_frac = anim::vek::Vec2::from(pos.0 - player_pos.map(|x|x as f32) )
                 .map2(
                     anim::vek::Vec2::<u32>::from(TerrainChunk::RECT_SIZE),
-                    |d: f32, sz| d.abs() as f32 / sz as f32,
+                    |d:f32, sz| d.abs() / sz as f32,
                 )
                 .magnitude()
                 / view_distance as f32;
@@ -848,11 +851,11 @@ impl FigureMgr {
             // as an acceptable tradeoff.
             let radius = scale.unwrap_or(&Scale(1.0)).0 * 2.0;
             let (in_frustum, lpindex) = if let Some(ref mut meta) = state {
-                let (in_frustum, lpindex) = BoundingSphere::new(pos.0.into_array(), radius)
+                let (in_frustum, lpindex) = BoundingSphere::new(pos.0.map(|x|x as f32).into_array(), radius as f32)
                     .coherent_test_against_frustum(frustum, meta.lpindex);
                 let in_frustum = in_frustum
                     || matches!(body, Body::Ship(_))
-                    || pos.0.distance_squared(focus_pos) < 32.0f32.powi(2);
+                    || pos.0.distance_squared(focus_pos.map(|x|x as f32)) < 32.0f32.powi(2);
                 meta.visible = in_frustum;
                 meta.lpindex = lpindex;
                 if in_frustum {
@@ -863,8 +866,8 @@ impl FigureMgr {
                     }); */
                 } else {
                     // Check whether we can shadow.
-                    meta.can_shadow_sun = can_shadow_sun(pos, radius);
-                    meta.can_occlude_rain = can_occlude_rain(pos, radius);
+                    meta.can_shadow_sun = can_shadow_sun(pos,radius as f32);
+                    meta.can_occlude_rain = can_occlude_rain(pos, radius as f32);
                 }
                 (in_frustum, lpindex)
             } else {
@@ -943,7 +946,7 @@ impl FigureMgr {
                 is_player: is_viewpoint,
                 _camera: camera,
                 terrain,
-                ground_vel: physics.ground_vel,
+                ground_vel: physics.ground_vel.map(|x|x as f32),
             };
 
             match body {
@@ -983,7 +986,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -1770,7 +1773,7 @@ impl FigureMgr {
                         CharacterState::Glide(data) => {
                             anim::character::GlidingAnimation::update_skeleton(
                                 &target_base,
-                                (rel_vel, ori, data.ori.into(), time, state.acc_vel),
+                                (rel_vel, ori, {let q = data.ori.to_quat(); anim::vek::Quaternion::<f32>::from_xyzw(q.x as f32,q.y as f32,q.z as f32,q.w as f32)}, time, state.acc_vel),
                                 state.state_time,
                                 &mut state_animation_rate,
                                 skeleton_attr,
@@ -1804,7 +1807,7 @@ impl FigureMgr {
                         CharacterState::GlideWield(data) => {
                             anim::character::GlideWieldAnimation::update_skeleton(
                                 &target_base,
-                                (ori, data.ori.into()),
+                                (ori, {let q = data.ori.to_quat(); anim::vek::Quaternion::<f32>::from_xyzw(q.x as f32,q.y as f32,q.z as f32,q.w as f32)}),
                                 state.state_time,
                                 &mut state_animation_rate,
                                 skeleton_attr,
@@ -1882,7 +1885,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -2082,7 +2085,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -2399,7 +2402,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -2756,7 +2759,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let _rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let _rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -2860,7 +2863,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -2943,7 +2946,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -3466,7 +3469,7 @@ impl FigureMgr {
                     });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -3557,7 +3560,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -3736,7 +3739,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -4028,7 +4031,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -4351,7 +4354,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -4434,7 +4437,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -5052,7 +5055,7 @@ impl FigureMgr {
                     });
 
                     // Average velocity relative to the current ground
-                    let _rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let _rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let (character, last_character) = match (character, last_character) {
                         (Some(c), Some(l)) => (c, l),
@@ -5293,7 +5296,7 @@ impl FigureMgr {
                     });
 
                     // Average velocity relative to the current ground
-                    let _rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let _rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let idlestate = CharacterState::Idle(idle::Data::default());
                     let last = Last(idlestate.clone());
@@ -5419,7 +5422,7 @@ impl FigureMgr {
                         });
 
                     // Average velocity relative to the current ground
-                    let _rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let _rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let idle_state = CharacterState::Idle(idle::Data::default());
                     let last = Last(idle_state.clone());
@@ -5512,7 +5515,7 @@ impl FigureMgr {
                     });
 
                     // Average velocity relative to the current ground
-                    let _rel_avg_vel = state.avg_vel - physics.ground_vel;
+                    let _rel_avg_vel = state.avg_vel - physics.ground_vel.map(|x|x as f32);
 
                     let idlestate = CharacterState::Idle(idle::Data::default());
                     let last = Last(idlestate.clone());
@@ -5618,8 +5621,8 @@ impl FigureMgr {
                     body,
                     inventory,
                     false,
-                    pos.0,
-                    figure_lod_render_distance * scale.map_or(1.0, |s| s.0),
+                    pos.0.map(|x|x as f32),
+                    figure_lod_render_distance * scale.map_or(1.0, |s| s.0) as f32,
                     match collider {
                         Some(Collider::Volume(vol)) => vol.mut_count,
                         _ => 0,
@@ -5699,8 +5702,8 @@ impl FigureMgr {
                 body,
                 inventory,
                 false,
-                pos.0,
-                figure_lod_render_distance * scale.map_or(1.0, |s| s.0),
+                pos.0.map(|x|x as f32),
+                figure_lod_render_distance * scale.map_or(1.0, |s| s.0) as f32,
                 match collider {
                     Some(Collider::Volume(vol)) => vol.mut_count,
                     _ => 0,
@@ -5753,7 +5756,7 @@ impl FigureMgr {
                 body,
                 inventory,
                 true,
-                pos.0,
+                pos.0.map(|x|x as f32),
                 figure_lod_render_distance,
                 0,
                 |state| state.visible(),
@@ -5799,8 +5802,8 @@ impl FigureMgr {
         } else {
             CameraMode::default()
         };
-        let focus_pos = camera.get_focus_pos();
-        let cam_pos = camera.dependents().cam_pos + focus_pos.map(|e| e.trunc());
+        let focus_pos = camera.get_focus_pos().map(|x|x as f32);
+        let cam_pos = camera.dependents().cam_pos.map(|x|x as f32) + focus_pos.map(|e| e.trunc());
         let character_state = if is_viewpoint { character_state } else { None };
 
         let FigureMgr {
@@ -6164,7 +6167,7 @@ impl FigureMgr {
             let figure_low_detail_distance = figure_lod_render_distance * 0.75;
             let figure_mid_detail_distance = figure_lod_render_distance * 0.5;
 
-            let model = if pos.distance_squared(cam_pos) > figure_low_detail_distance.powi(2) {
+            let model = if pos.distance_squared(cam_pos.map(|x|x as f32)) > figure_low_detail_distance.powi(2) {
                 model_entry.lod_model(2)
             } else if pos.distance_squared(cam_pos) > figure_mid_detail_distance.powi(2) {
                 model_entry.lod_model(1)
@@ -6346,7 +6349,7 @@ pub struct FigureUpdateCommonParameters<'a> {
     pub entity: Option<EcsEntity>,
     pub pos: anim::vek::Vec3<f32>,
     pub ori: anim::vek::Quaternion<f32>,
-    pub scale: f32,
+    pub scale: f64,
     pub mount_transform_pos: Option<(anim::vek::Transform<f32, f32, f32>, anim::vek::Vec3<f32>)>,
     pub body: Option<Body>,
     pub tools: (Option<ToolKind>, Option<ToolKind>),
@@ -6377,7 +6380,7 @@ impl<S: Skeleton> FigureState<S> {
                 mount_transform: offsets.mount_bone,
                 mount_world_pos: anim::vek::Vec3::zero(),
                 state_time: 0.0,
-                last_ori: Ori::default().into(),
+                last_ori: anim::vek::Quaternion::default(),
                 lpindex: 0,
                 visible: false,
                 can_shadow_sun: false,
@@ -6455,7 +6458,7 @@ impl<S: Skeleton> FigureState<S> {
         self.state_time += dt * state_animation_rate;
 
         let mat = {
-            let scale_mat = anim::vek::Mat4::scaling_3d(anim::vek::Vec3::from(*scale));
+            let scale_mat = anim::vek::Mat4::scaling_3d(anim::vek::Vec3::from(*scale as f32));
             if let Some((transform, _)) = *mount_transform_pos {
                 // Note: if we had a way to compute a "default" transform of the bones then in
                 // the animations we could make use of the mount_offset from common by

@@ -27,7 +27,7 @@ impl Component for LightEmitter {
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LightAnimation {
-    pub offset: Vec3<f32>,
+    pub offset: Vec3<f64>,
     pub col: Rgb<f32>,
     pub strength: f32,
 }

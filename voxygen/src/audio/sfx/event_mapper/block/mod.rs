@@ -52,8 +52,8 @@ impl EventMapper for BlockEventMapper {
         terrain: &Terrain<TerrainChunk>,
         client: &Client,
     ) {
-        let focus_off = camera.get_focus_pos().map(f32::trunc);
-        let cam_pos = camera.dependents().cam_pos + focus_off;
+        let focus_off = camera.get_focus_pos().map(|x|x as f64).map(f64::trunc);
+        let cam_pos = camera.dependents().cam_pos.map(|x|x as f64) + focus_off;
 
         // Get the player position and chunk
         let player_pos = state
@@ -170,7 +170,7 @@ impl EventMapper for BlockEventMapper {
             // or if the player is far enough underground, continue
             // TODO Address bird hack properly. See TODO on line 190
             if !(sounds.cond)(state)
-                || player_pos.0.z < (terrain_alt - 30.0)
+                || player_pos.0.z < (terrain_alt as f64 - 30.0)
                 || (sounds.sfx == SfxEvent::Birdcall && thread_rng().gen_bool(0.995))
                 || (sounds.sfx == SfxEvent::Owl && thread_rng().gen_bool(0.998))
                 || (sounds.sfx == SfxEvent::Frog && thread_rng().gen_bool(0.95))
@@ -230,7 +230,7 @@ impl EventMapper for BlockEventMapper {
                             temp,
                         ) {
                             // If the camera is within SFX distance
-                            if (block_pos.distance_squared(cam_pos)) < SFX_DIST_LIMIT_SQR {
+                            if (block_pos.map(|x|x as f64).distance_squared(cam_pos)) < SFX_DIST_LIMIT_SQR {
                                 let underwater = state
                                     .terrain()
                                     .get(cam_pos.map(|e| e.floor() as i32))
@@ -241,7 +241,7 @@ impl EventMapper for BlockEventMapper {
                                 if sounds.sfx == SfxEvent::RunningWaterFast {
                                     audio.emit_filtered_sfx(
                                         sfx_trigger_item,
-                                        block_pos,
+                                        block_pos.map(|x|x as f64),
                                         Some(sounds.volume),
                                         Some(8000),
                                         underwater,
@@ -249,7 +249,7 @@ impl EventMapper for BlockEventMapper {
                                 } else {
                                     audio.emit_sfx(
                                         sfx_trigger_item,
-                                        block_pos,
+                                        block_pos.map(|x|x as f64),
                                         Some(sounds.volume),
                                         underwater,
                                     );

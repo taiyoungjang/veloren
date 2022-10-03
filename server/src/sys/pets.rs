@@ -30,7 +30,7 @@ impl<'a> System<'a> for Sys {
         _job: &mut Job<Self>,
         (entities, terrain, mut positions, alignments, pets, physics, uid_allocator): Self::SystemData,
     ) {
-        const LOST_PET_DISTANCE_THRESHOLD: f32 = 200.0;
+        const LOST_PET_DISTANCE_THRESHOLD: f64 = 200.0;
 
         // Find pets that are too far away from their owner
         let lost_pets: Vec<(Entity, Pos)> = (&entities, &positions, &alignments, &pets)
@@ -67,7 +67,7 @@ impl<'a> System<'a> for Sys {
                 // processing the entity position move here
                 pet_pos.0 = terrain
                     .find_space(owner_pos.0.map(|e| e.floor() as i32))
-                    .map(|e| e as f32);
+                    .map(|e| e as f64);
             }
         }
     }

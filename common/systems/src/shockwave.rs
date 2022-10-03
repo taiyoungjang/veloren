@@ -107,10 +107,10 @@ impl<'a> System<'a> for Sys {
             }
 
             // Determine area that was covered by the shockwave in the last tick
-            let time_since_creation = (time - creation_time) as f32;
-            let frame_start_dist = (shockwave.speed * (time_since_creation - dt)).max(0.0);
-            let frame_end_dist = (shockwave.speed * time_since_creation).max(frame_start_dist);
-            let pos2 = Vec2::from(pos.0);
+            let time_since_creation = (time - creation_time) as f64;
+            let frame_start_dist = (shockwave.speed as f64 * (time_since_creation - dt as f64)).max(0.0);
+            let frame_end_dist = (shockwave.speed as f64 * time_since_creation).max(frame_start_dist);
+            let pos2:Vec2<f64> = Vec2::from(pos.0);
             let look_dir = ori.look_dir();
 
             // From one frame to the next a shockwave travels over a strip of an arc
@@ -158,7 +158,7 @@ impl<'a> System<'a> for Sys {
 
                 // Angle checks
                 let pos_b_ground = Vec3::new(pos_b.0.x, pos_b.0.y, pos.0.z);
-                let max_angle = shockwave.vertical_angle.to_radians();
+                let max_angle = shockwave.vertical_angle.to_radians() as f64;
 
                 // See if entities are in the same group
                 let same_group = group
@@ -257,19 +257,19 @@ impl<'a> System<'a> for Sys {
 
 #[derive(Clone, Copy)]
 struct ArcStrip {
-    origin: Vec2<f32>,
+    origin: Vec2<f64>,
     /// Normalizable direction
-    dir: Vec2<f32>,
+    dir: Vec2<f64>,
     /// Angle in degrees
     angle: f32,
     /// Start radius
-    start: f32,
+    start: f64,
     /// End radius
-    end: f32,
+    end: f64,
 }
 
 impl ArcStrip {
-    fn collides_with_circle(self, d: Disk<f32, f32>) -> bool {
+    fn collides_with_circle(self, d: Disk<f64, f64>) -> bool {
         // Quit if aabb's don't collide
         if (self.origin.x - d.center.x).abs() > self.end + d.radius
             || (self.origin.y - d.center.y).abs() > self.end + d.radius
@@ -278,7 +278,7 @@ impl ArcStrip {
         }
 
         let dist = self.origin.distance(d.center);
-        let half_angle = self.angle.to_radians() / 2.0;
+        let half_angle = self.angle.to_radians() as f64 / 2.0;
 
         if dist > self.end + d.radius || dist + d.radius < self.start {
             // Completely inside or outside full ring
@@ -344,10 +344,10 @@ impl ArcStrip {
 // Uses precalculated distance
 // https://www.xarg.org/2016/07/calculate-the-intersection-points-of-two-circles/
 fn intersection_points(
-    disk1: Disk<f32, f32>,
-    disk2: Disk<f32, f32>,
-    dist: f32,
-) -> (Vec2<f32>, Vec2<f32>) {
+    disk1: Disk<f64, f64>,
+    disk2: Disk<f64, f64>,
+    dist: f64,
+) -> (Vec2<f64>, Vec2<f64>) {
     let e = (disk2.center - disk1.center) / dist;
 
     let x = (disk1.radius.powi(2) - disk2.radius.powi(2) + dist.powi(2)) / (2.0 * dist);

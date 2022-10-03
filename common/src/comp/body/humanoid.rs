@@ -64,7 +64,7 @@ impl Body {
             .min(self.species.num_accessories(self.body_type) - 1);
     }
 
-    pub fn height(&self) -> f32 { (20.0 / 9.0) * self.scaler() }
+    pub fn height(&self) -> f64 { (20.0 / 9.0) * self.scaler() as f64 }
 
     pub fn scaler(&self) -> f32 {
         match (self.species, self.body_type) {

@@ -67,7 +67,7 @@ impl CharacterBehavior for Data {
     fn behavior(&self, data: &JoinData, output_events: &mut OutputEvents) -> StateUpdate {
         let mut update = StateUpdate::from(data);
 
-        let ori_rate = self.static_data.ori_rate;
+        let ori_rate = self.static_data.ori_rate as f64;
 
         handle_orientation(data, &mut update, ori_rate, None);
         handle_move(data, &mut update, 0.4);
@@ -229,7 +229,7 @@ impl CharacterBehavior for Data {
     }
 }
 
-fn height_offset(body: &Body, look_dir: Dir, velocity: Vec3<f32>, on_ground: Option<Block>) -> f32 {
+fn height_offset(body: &Body, look_dir: Dir, velocity: Vec3<f64>, on_ground: Option<Block>) -> f64 {
     match body {
         // Hack to make the beam offset correspond to the animation
         Body::BirdLarge(_) => {
@@ -241,7 +241,7 @@ fn height_offset(body: &Body, look_dir: Dir, velocity: Vec3<f32>, on_ground: Opt
                 }
         },
         Body::Golem(_) => {
-            const DIR_COEFF: f32 = 2.0;
+            const DIR_COEFF: f64 = 2.0;
             body.height() * 0.9 + look_dir.z * DIR_COEFF
         },
         Body::BipedLarge(b) => match b.species {
@@ -255,10 +255,10 @@ fn height_offset(body: &Body, look_dir: Dir, velocity: Vec3<f32>, on_ground: Opt
 pub fn beam_offsets(
     body: &Body,
     look_dir: Dir,
-    ori: Vec3<f32>,
-    velocity: Vec3<f32>,
+    ori: Vec3<f64>,
+    velocity: Vec3<f64>,
     on_ground: Option<Block>,
-) -> Vec3<f32> {
+) -> Vec3<f64> {
     let dim = body.dimensions();
     // The width (shoulder to shoulder) and length (nose to tail)
     let (width, length) = (dim.x, dim.y);

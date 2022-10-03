@@ -136,7 +136,7 @@ use world::{
 };
 
 #[derive(Copy, Clone)]
-pub struct SpawnPoint(pub Vec3<f32>);
+pub struct SpawnPoint(pub Vec3<f64>);
 
 impl Default for SpawnPoint {
     fn default() -> Self { Self(Vec3::new(0.0, 0.0, 256.0)) }
@@ -1321,7 +1321,7 @@ impl Server {
         // // Pick a random position but not to close to the edge
         // let rand_pos = world_dims_blocks.map(|e| e as i32).map(|e| e / 2 +
         // rng.gen_range(-e/2..e/2 + 1));
-        let pos = comp::Pos(Vec3::from(world_dims_blocks.map(|e| e as f32 / 2.0)));
+        let pos = comp::Pos(Vec3::from(world_dims_blocks.map(|e| e as f64 / 2.0)));
         self.state
             .create_persister(pos, view_distance, &self.world, &self.index)
             .build();

@@ -81,7 +81,7 @@ impl<'a> System<'a> for Sys {
         {
             let vd = presence.entity_view_distance.current();
             // Calculate current chunk
-            let chunk = (Vec2::<f32>::from(pos.0))
+            let chunk = (Vec2::<f64>::from(pos.0))
                 .map2(TerrainChunkSize::RECT_SIZE, |e, sz| e as i32 / sz as i32);
             // Only update regions when moving to a new chunk or if view distance has
             // changed.
@@ -92,11 +92,11 @@ impl<'a> System<'a> for Sys {
                 && (subscription
                     .fuzzy_chunk
                     .map2(TerrainChunkSize::RECT_SIZE, |e, sz| {
-                        (e as f32 + 0.5) * sz as f32
+                        (e as f64 + 0.5) * sz as f64
                     })
                     - Vec2::from(pos.0))
                 .map2(TerrainChunkSize::RECT_SIZE, |e, sz| {
-                    e.abs() > (sz / 2 + presence::CHUNK_FUZZ) as f32
+                    e.abs() > (sz / 2 + presence::CHUNK_FUZZ) as f64
                 })
                 .reduce_or()
                 || subscription.last_entity_view_distance != vd
@@ -104,21 +104,22 @@ impl<'a> System<'a> for Sys {
                 // Update the view distance
                 subscription.last_entity_view_distance = vd;
                 // Update current chunk
-                subscription.fuzzy_chunk = Vec2::<f32>::from(pos.0)
+                subscription.fuzzy_chunk = Vec2::<f64>::from(pos.0)
                     .map2(TerrainChunkSize::RECT_SIZE, |e, sz| e as i32 / sz as i32);
                 // Use the largest side length as our chunk size
-                let chunk_size = TerrainChunkSize::RECT_SIZE.reduce_max() as f32;
+                let chunk_size = TerrainChunkSize::RECT_SIZE.reduce_max() as f64;
                 // Iterate through currently subscribed regions
                 for key in &subscription.regions {
                     // Check if the region is not within range anymore
                     if !region_in_vd(
                         *key,
                         pos.0,
-                        (vd as f32 * chunk_size)
-                            + (presence::CHUNK_FUZZ as f32
-                                + presence::REGION_FUZZ as f32
+                        (vd as f64 * chunk_size)
+                            + (presence::CHUNK_FUZZ as f64
+                                + presence::REGION_FUZZ as f64
                                 + chunk_size)
-                                * 2.0f32.sqrt(),
+                                * 2.0f64
+                            .sqrt(),
                     ) {
                         // Add to the list of regions to remove
                         regions_to_remove.push(*key);
@@ -173,8 +174,8 @@ impl<'a> System<'a> for Sys {
 
                 for key in regions_in_vd(
                     pos.0,
-                    (vd as f32 * chunk_size)
-                        + (presence::CHUNK_FUZZ as f32 + chunk_size) * 2.0f32.sqrt(),
+                    (vd as f64 * chunk_size)
+                        + (presence::CHUNK_FUZZ as f64 + chunk_size) * 2.0f64.sqrt(),
                 ) {
                     // Send client initial info about the entities in this region if it was not
                     // already within the set of subscribed regions
@@ -217,13 +218,13 @@ pub fn initialize_region_subscription(world: &World, entity: specs::Entity) {
         world.read_storage::<Presence>().get(entity),
         world.write_storage::<Client>().get(entity),
     ) {
-        let fuzzy_chunk = (Vec2::<f32>::from(client_pos.0))
+        let fuzzy_chunk = (Vec2::<f64>::from(client_pos.0))
             .map2(TerrainChunkSize::RECT_SIZE, |e, sz| e as i32 / sz as i32);
-        let chunk_size = TerrainChunkSize::RECT_SIZE.reduce_max() as f32;
+        let chunk_size = TerrainChunkSize::RECT_SIZE.reduce_max() as f64;
         let regions = regions_in_vd(
             client_pos.0,
-            (presence.entity_view_distance.current() as f32 * chunk_size) as f32
-                + (presence::CHUNK_FUZZ as f32 + chunk_size) * 2.0f32.sqrt(),
+            (presence.entity_view_distance.current() as f64 * chunk_size) as f64
+                + (presence::CHUNK_FUZZ as f64 + chunk_size) * 2.0f64.sqrt(),
         );
 
         let region_map = world.read_resource::<RegionMap>();

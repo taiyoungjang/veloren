@@ -48,7 +48,7 @@ impl TrailMgr {
             )
                 .join()
             {
-                const MIN_SPEED: f32 = 15.0;
+                const MIN_SPEED: f64 = 15.0;
                 if vel.0.magnitude_squared() > MIN_SPEED.powi(2)
                     && matches!(
                         body,
@@ -64,9 +64,9 @@ impl TrailMgr {
                     let offset = self.offset;
                     let quad_mesh = self.entity_mesh_or_insert(entity, true);
                     const THICKNESS: f32 = 0.05;
-                    let p1 = pos.0;
+                    let p1 = pos.0.map(|x|x as f32);
                     let p2 = p1 + Vec3::unit_z() * THICKNESS;
-                    let p4 = last_pos.0;
+                    let p4 = last_pos.0.map(|x|x as f32);
                     let p3 = p4 + Vec3::unit_z() * THICKNESS;
                     let vertex = |p: Vec3<f32>| TrailVertex {
                         pos: p.into_array(),

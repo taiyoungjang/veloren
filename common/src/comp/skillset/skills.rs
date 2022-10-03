@@ -336,22 +336,22 @@ pub struct HammerTreeModifiers {
 }
 
 pub struct HammerStrikeModifiers {
-    pub knockback: f32,
+    pub knockback: f64,
 }
 
 pub struct HammerChargedModifers {
     pub scaled_damage: f32,
-    pub scaled_knockback: f32,
+    pub scaled_knockback: f64,
     pub energy_drain: f32,
     pub charge_rate: f32,
 }
 
 pub struct HammerLeapModifiers {
     pub base_damage: f32,
-    pub knockback: f32,
+    pub knockback: f64,
     pub energy_cost: f32,
     pub leap_strength: f32,
-    pub range: f32,
+    pub range: f64,
 }
 
 impl HammerTreeModifiers {
@@ -390,7 +390,7 @@ pub struct BowUniversalModifiers {
 pub struct BowChargedModifiers {
     pub damage_scaling: f32,
     pub regen_scaling: f32,
-    pub knockback_scaling: f32,
+    pub knockback_scaling: f64,
     pub charge_rate: f32,
     pub move_speed: f32,
 }
@@ -445,7 +445,7 @@ pub struct StaffTreeModifiers {
 pub struct StaffFireballModifiers {
     pub power: f32,
     pub regen: f32,
-    pub range: f32,
+    pub range: f64,
 }
 
 pub struct StaffFlamethrowerModifiers {
@@ -457,7 +457,7 @@ pub struct StaffFlamethrowerModifiers {
 
 pub struct StaffShockwaveModifiers {
     pub damage: f32,
-    pub knockback: f32,
+    pub knockback: f64,
     pub duration: f32,
     pub energy_cost: f32,
 }

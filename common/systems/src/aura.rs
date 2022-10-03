@@ -88,7 +88,7 @@ impl<'a> System<'a> for Sys {
                 let target_iter = read_data
                     .cached_spatial_grid
                     .0
-                    .in_circle_aabr(pos.0.xy(), aura.radius)
+                    .in_circle_aabr(pos.0.xy(), aura.radius as f64)
                     .filter_map(|target| {
                         read_data
                             .positions
@@ -106,7 +106,7 @@ impl<'a> System<'a> for Sys {
                     };
 
                     // Ensure entity is within the aura radius
-                    if target_pos.0.distance_squared(pos.0) < aura.radius.powi(2) {
+                    if target_pos.0.distance_squared(pos.0) < aura.radius.powi(2) as f64 {
                         // Ensure the entity is in the group we want to target
                         let same_group = |uid: Uid| {
                             read_data

@@ -69,7 +69,7 @@ impl<'a> System<'a> for Sys {
 
             if rtsim
                 .chunks
-                .chunk_at(entity.pos.xy())
+                .chunk_at(entity.pos.xy().map(|x|x as f32))
                 .map(|c| c.is_loaded)
                 .unwrap_or(false)
             {
@@ -84,14 +84,14 @@ impl<'a> System<'a> for Sys {
                             .unwrap_or_else(Vec2::zero)
                             * entity.get_body().max_speed_approx()
                             * entity.controller.speed_factor,
-                    ) * dt;
+                    ) * dt as f64;
                 }
 
                 if let Some(alt) = world
                     .sim()
                     .get_alt_approx(entity.pos.xy().map(|e| e.floor() as i32))
                 {
-                    entity.pos.z = alt;
+                    entity.pos.z = alt as f64;
                 }
             }
             entity.tick(&time, &terrain, &world, &index.as_index_ref());
@@ -112,7 +112,7 @@ impl<'a> System<'a> for Sys {
             let body = entity.get_body();
             let spawn_pos = terrain
                 .find_space(entity.pos.map(|e| e.floor() as i32))
-                .map(|e| e as f32)
+                .map(|e| e as f64)
                 + Vec3::new(0.5, 0.5, body.flying_height());
 
             let pos = comp::Pos(spawn_pos);
@@ -134,7 +134,7 @@ impl<'a> System<'a> for Sys {
                 let entity_config = EntityConfig::from_asset_expect_owned(entity_config_path)
                     .with_body(BodyBuilder::Exact(body));
 
-                let mut entity_info = EntityInfo::at(pos.0)
+                let mut entity_info = EntityInfo::at(pos.0.map(|x|x as f32))
                     .with_entity_config(entity_config, Some(entity_config_path), &mut loadout_rng)
                     .with_lazy_loadout(ad_hoc_loadout);
                 // Merchants can be traded with

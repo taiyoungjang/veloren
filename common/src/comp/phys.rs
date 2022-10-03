@@ -13,7 +13,7 @@ use vek::*;
 
 /// Position
 #[derive(Copy, Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Pos(pub Vec3<f32>);
+pub struct Pos(pub Vec3<f64>);
 
 impl Component for Pos {
     type Storage = VecStorage<Self>;
@@ -21,7 +21,7 @@ impl Component for Pos {
 
 /// Velocity
 #[derive(Copy, Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Vel(pub Vec3<f32>);
+pub struct Vel(pub Vec3<f64>);
 
 impl Vel {
     pub fn zero() -> Self { Vel(Vec3::zero()) }
@@ -48,21 +48,21 @@ impl Component for PosVelOriDefer {
 /// no need to send it via network
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct PreviousPhysCache {
-    pub velocity_dt: Vec3<f32>,
+    pub velocity_dt: Vec3<f64>,
     /// Center of bounding sphere that encompasses the entity along its path for
     /// this tick
-    pub center: Vec3<f32>,
+    pub center: Vec3<f64>,
     /// Calculates a Sphere over the Entity for quick boundary checking
-    pub collision_boundary: f32,
-    pub scale: f32,
+    pub collision_boundary: f64,
+    pub scale: f64,
     /// Approximate radius of cylinder of collider.
-    pub scaled_radius: f32,
+    pub scaled_radius: f64,
     /// Radius of stadium of collider.
-    pub neighborhood_radius: f32,
+    pub neighborhood_radius: f64,
     /// relative p0 and p1 of collider's statium, None if cylinder.
-    pub origins: Option<(Vec2<f32>, Vec2<f32>)>,
+    pub origins: Option<(Vec2<f64>, Vec2<f64>)>,
     pub pos: Option<Pos>,
-    pub ori: Quaternion<f32>,
+    pub ori: Quaternion<f64>,
 }
 
 impl Component for PreviousPhysCache {
@@ -71,7 +71,7 @@ impl Component for PreviousPhysCache {
 
 // Scale
 #[derive(Copy, Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Scale(pub f32);
+pub struct Scale(pub f64);
 
 impl Component for Scale {
     type Storage = DerefFlaggedStorage<Self, VecStorage<Self>>;
@@ -79,7 +79,7 @@ impl Component for Scale {
 
 // Mass
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Mass(pub f32);
+pub struct Mass(pub f64);
 
 impl Default for Mass {
     fn default() -> Mass { Mass(1.0) }
@@ -92,7 +92,7 @@ impl Component for Mass {
 /// The average density (specific mass) of an entity.
 /// Units used for reference is kg/m³
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Density(pub f32);
+pub struct Density(pub f64);
 
 impl Default for Density {
     fn default() -> Density { Density(WATER_DENSITY) }
@@ -115,11 +115,11 @@ pub enum Collider {
     Volume(Arc<VoxelCollider>),
     /// Capsule prism with line segment from p0 to p1
     CapsulePrism {
-        p0: Vec2<f32>,
-        p1: Vec2<f32>,
-        radius: f32,
-        z_min: f32,
-        z_max: f32,
+        p0: Vec2<f64>,
+        p1: Vec2<f64>,
+        radius: f64,
+        z_min: f64,
+        z_max: f64,
     },
     Point,
 }
@@ -127,7 +127,7 @@ pub enum Collider {
 impl Collider {
     pub fn is_voxel(&self) -> bool { matches!(self, Collider::Voxel { .. } | Collider::Volume(_)) }
 
-    pub fn bounding_radius(&self) -> f32 {
+    pub fn bounding_radius(&self) -> f64 {
         match self {
             Collider::Voxel { .. } | Collider::Volume(_) => 1.0,
             Collider::CapsulePrism { radius, p0, p1, .. } => {
@@ -138,12 +138,12 @@ impl Collider {
         }
     }
 
-    pub fn get_height(&self) -> f32 {
+    pub fn get_height(&self) -> f64 {
         let (z_min, z_max) = self.get_z_limits(1.0);
         z_max - z_min
     }
 
-    pub fn get_z_limits(&self, modifier: f32) -> (f32, f32) {
+    pub fn get_z_limits(&self, modifier: f64) -> (f64, f64) {
         match self {
             Collider::Voxel { .. } | Collider::Volume(_) => (0.0, 1.0),
             Collider::CapsulePrism { z_min, z_max, .. } => (*z_min * modifier, *z_max * modifier),
@@ -175,12 +175,12 @@ impl Component for Immovable {
 pub struct PhysicsState {
     pub on_ground: Option<Block>,
     pub on_ceiling: bool,
-    pub on_wall: Option<Vec3<f32>>,
+    pub on_wall: Option<Vec3<f64>>,
     pub touch_entities: HashSet<Uid>,
     pub in_fluid: Option<Fluid>,
-    pub ground_vel: Vec3<f32>,
+    pub ground_vel: Vec3<f64>,
     pub footwear: Friction,
-    pub skating_last_height: f32,
+    pub skating_last_height: f64,
     pub skating_active: bool,
 }
 
@@ -197,14 +197,14 @@ impl PhysicsState {
         }
     }
 
-    pub fn on_surface(&self) -> Option<Vec3<f32>> {
+    pub fn on_surface(&self) -> Option<Vec3<f64>> {
         self.on_ground
             .map(|_| -Vec3::unit_z())
             .or_else(|| self.on_ceiling.then_some(Vec3::unit_z()))
             .or(self.on_wall)
     }
 
-    pub fn in_liquid(&self) -> Option<f32> { self.in_fluid.and_then(|fluid| fluid.depth()) }
+    pub fn in_liquid(&self) -> Option<f64> { self.in_fluid.and_then(|fluid| fluid.depth()) }
 }
 
 impl Component for PhysicsState {

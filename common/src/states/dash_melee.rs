@@ -90,7 +90,7 @@ impl CharacterBehavior for Data {
                         / self.static_data.charge_duration.as_secs_f32())
                     .min(1.0);
 
-                    handle_orientation(data, &mut update, self.static_data.ori_modifier, None);
+                    handle_orientation(data, &mut update, self.static_data.ori_modifier as f64, None);
                     handle_forced_movement(data, &mut update, ForcedMovement::Forward {
                         strength: self.static_data.forward_speed * charge_frac.sqrt(),
                     });
@@ -107,7 +107,7 @@ impl CharacterBehavior for Data {
                             data.entity,
                             self.static_data
                                 .melee_constructor
-                                .handle_scaling(charge_frac)
+                                .handle_scaling(charge_frac as f64)
                                 .create_melee(crit_data, buff_strength),
                         );
 
@@ -139,9 +139,9 @@ impl CharacterBehavior for Data {
                                     self.charge_end_timer
                                 } else {
                                     self.timer
-                                        .checked_add(Duration::from_secs_f32(
+                                        .checked_add(Duration::from_secs_f64(
                                             0.2 * self.static_data.melee_constructor.range
-                                                / self.static_data.forward_speed,
+                                                / self.static_data.forward_speed as f64,
                                         ))
                                         .unwrap_or(self.static_data.charge_duration)
                                         .min(self.static_data.charge_duration)
@@ -199,7 +199,7 @@ impl CharacterBehavior for Data {
                         data.entity,
                         self.static_data
                             .melee_constructor
-                            .handle_scaling(charge_frac)
+                            .handle_scaling(charge_frac as f64)
                             .create_melee(crit_data, buff_strength),
                     );
 

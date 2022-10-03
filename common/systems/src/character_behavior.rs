@@ -163,7 +163,7 @@ impl<'a> System<'a> for Sys {
                     if let Some(impulse_strength) = impulse_strength {
                         server_emitter.emit(ServerEvent::Knockback {
                             entity,
-                            impulse: impulse_strength * *poise.knockback(),
+                            impulse: impulse_strength as f64 * *poise.knockback(),
                         });
                     }
                 }

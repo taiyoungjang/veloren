@@ -257,8 +257,8 @@ impl Scene {
         renderer.update_consts(&mut self.data.globals, &[Globals::new(
             view_mat,
             proj_mat,
-            cam_pos,
-            self.camera.get_focus_pos(),
+            cam_pos.map(|x|x as f32),
+            self.camera.get_focus_pos().map(|x|x as f32),
             VD,
             self.lod.tgt_detail as f32,
             self.map_bounds,

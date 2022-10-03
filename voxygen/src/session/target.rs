@@ -63,15 +63,15 @@ pub(super) fn targets_under_cursor(
     let ecs = client.state().ecs();
     let positions = ecs.read_storage::<comp::Pos>();
     let player_pos = match positions.get(player_entity) {
-        Some(pos) => pos.0,
-        None => cam_pos, // Should never happen, but a safe fallback
+        Some(pos) => pos.0.map(|x|x as f32),
+        None => cam_pos.map(|x|x as f32), // Should never happen, but a safe fallback
     };
     let scales = ecs.read_storage();
     let colliders = ecs.read_storage();
     let char_states = ecs.read_storage();
     // Get the player's cylinder
     let player_cylinder = Cylinder::from_components(
-        player_pos,
+        player_pos.map(|x|x as f64),
         scales.get(player_entity).copied(),
         colliders.get(player_entity),
         char_states.get(player_entity),
@@ -80,7 +80,7 @@ pub(super) fn targets_under_cursor(
 
     let find_pos = |hit: fn(Block) -> bool| {
         let cam_ray = terrain
-            .ray(cam_pos, cam_pos + cam_dir * 100.0)
+            .ray(cam_pos.map(|x|x as f64), cam_pos.map(|x|x as f64) + cam_dir.map(|x|x as f64) * 100.0)
             .until(|block| hit(*block))
             .cast();
         let cam_ray = (cam_ray.0, cam_ray.1.map(|x| x.copied()));
@@ -88,11 +88,11 @@ pub(super) fn targets_under_cursor(
 
         if matches!(
             cam_ray.1,
-            Ok(Some(_)) if player_cylinder.min_distance(cam_pos + cam_dir * (cam_dist + 0.01)) <= MAX_PICKUP_RANGE
+            Ok(Some(_)) if player_cylinder.min_distance(cam_pos.map(|x|x as f64) + cam_dir.map(|x|x as f64) * (cam_dist + 0.01)) <= MAX_PICKUP_RANGE
         ) {
             (
-                Some(cam_pos + cam_dir * (cam_dist + 0.01)),
-                Some(cam_pos + cam_dir * (cam_dist - 0.01)),
+                Some(cam_pos + cam_dir * (cam_dist as f32 + 0.01)),
+                Some(cam_pos + cam_dir * (cam_dist as f32 - 0.01)),
                 Some(cam_ray),
             )
         } else {
@@ -112,8 +112,8 @@ pub(super) fn targets_under_cursor(
     // narrow this down
     let cast_dist = solid_cam_ray
         .as_ref()
-        .map(|(d, _)| d.min(MAX_TARGET_RANGE))
-        .unwrap_or(MAX_TARGET_RANGE);
+        .map(|(d, _)| d.min(MAX_TARGET_RANGE as f64))
+        .unwrap_or(MAX_TARGET_RANGE as f64);
 
     // Need to raycast by distance to cam
     // But also filter out by distance to the player (but this only needs to be done
@@ -131,9 +131,9 @@ pub(super) fn targets_under_cursor(
         .filter_map(|(e, p, s, b, i, _)| {
             const RADIUS_SCALE: f32 = 3.0;
             // TODO: use collider radius instead of body radius?
-            let radius = s.map_or(1.0, |s| s.0) * b.max_radius() * RADIUS_SCALE;
+            let radius = s.map_or(1.0, |s| s.0 as f32) * b.max_radius() as f32 * RADIUS_SCALE;
             // Move position up from the feet
-            let pos = Vec3::new(p.0.x, p.0.y, p.0.z + radius);
+            let pos = Vec3::new(p.0.x as f32, p.0.y as f32, p.0.z as f32 + radius);
             // Distance squared from camera to the entity
             let dist_sqr = pos.distance_squared(cam_pos);
             // We only care about interacting with entities that contain items,
@@ -145,7 +145,7 @@ pub(super) fn targets_under_cursor(
             }
         })
         // Roughly filter out entities farther than ray distance
-        .filter(|(_, _, r, d_sqr)| *d_sqr <= cast_dist.powi(2) + 2.0 * cast_dist * r + r.powi(2))
+        .filter(|(_, _, r, d_sqr)| *d_sqr <= cast_dist.powi(2) as f32 + 2.0 * cast_dist as f32 * r + r.powi(2))
         // Ignore entities intersecting the camera
         .filter(|(_, _, r, d_sqr)| *d_sqr > r.powi(2))
         // Substract sphere radius from distance to the camera
@@ -156,7 +156,7 @@ pub(super) fn targets_under_cursor(
 
     let seg_ray = LineSegment3 {
         start: cam_pos,
-        end: cam_pos + cam_dir * cast_dist,
+        end: cam_pos + cam_dir * cast_dist as f32,
     };
     // TODO: fuzzy borders
     let entity_target = nearby
@@ -167,18 +167,18 @@ pub(super) fn targets_under_cursor(
         .and_then(|(e, p, _)| {
             // Get the entity's cylinder
             let target_cylinder = Cylinder::from_components(
-                p,
+                p.map(|x|x as f64),
                 scales.get(*e).copied(),
                 colliders.get(*e),
                 char_states.get(*e),
             );
 
             let dist_to_player = player_cylinder.min_distance(target_cylinder);
-            if dist_to_player < MAX_TARGET_RANGE {
+            if dist_to_player < MAX_TARGET_RANGE as f64 {
                 Some(Target {
                     kind: Entity(*e),
                     position: p,
-                    distance: dist_to_player,
+                    distance: dist_to_player as f32,
                 })
             } else { None }
         });
@@ -187,7 +187,7 @@ pub(super) fn targets_under_cursor(
     let terrain_target = if let (None, Some(distance)) = (entity_target, solid_ray_dist) {
         solid_pos.map(|position| Target {
             kind: Terrain,
-            distance,
+            distance: distance as f32,
             position,
         })
     } else {
@@ -199,7 +199,7 @@ pub(super) fn targets_under_cursor(
             .zip(solid_pos)
             .map(|(place_pos, position)| Target {
                 kind: Build(place_pos),
-                distance,
+                distance: distance as f32,
                 position,
             })
     } else {
@@ -210,13 +210,13 @@ pub(super) fn targets_under_cursor(
         .zip(collect_cam_ray)
         .map(|(position, ray)| Target {
             kind: Collectable,
-            distance: ray.0,
+            distance: ray.0 as f32,
             position,
         });
 
     let mine_target = mine_pos.zip(mine_cam_ray).map(|(position, ray)| Target {
         kind: Mine,
-        distance: ray.0,
+        distance: ray.0 as f32,
         position,
     });
 

@@ -8,7 +8,7 @@ use common::{
 };
 use enumset::*;
 use rand_distr::{Distribution, Normal};
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use tracing::warn;
 use world::{
     civ::{Site, Track},
@@ -18,7 +18,7 @@ use world::{
 
 pub struct Entity {
     pub is_loaded: bool,
-    pub pos: Vec3<f32>,
+    pub pos: Vec3<f64>,
     pub seed: u32,
     pub last_time_ticked: f64,
     pub controller: RtSimController,
@@ -179,7 +179,7 @@ impl Entity {
                                 let wpos = site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
                                     e * sz as i32 + sz as i32 / 2
                                 });
-                                wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32
+                                wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32
                             })
                             .map(|(id, _)| id)
                         {
@@ -192,7 +192,7 @@ impl Entity {
                                     e * sz as i32 + sz as i32 / 2
                                 });
                             let dist =
-                                site_wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                                site_wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                             if dist < 64_u32.pow(2) {
                                 Travel::InSite {
                                     site_id: nearest_site_id,
@@ -225,7 +225,7 @@ impl Entity {
                                     e * sz as i32 + sz as i32 / 2
                                 });
                                 let dist =
-                                    wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                                    wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                                 dist + if dist < 96_u32.pow(2) { 100_000_000 } else { 0 }
                             })
                         {
@@ -236,7 +236,7 @@ impl Entity {
                                 let mut path = Vec::<Vec2<i32>>::default();
                                 let target_site_pos =
                                     site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
-                                        (e * sz as i32 + sz as i32 / 2) as f32
+                                        (e * sz as i32 + sz as i32 / 2) as f64
                                     });
                                 let offset_site_pos =
                                     target_site_pos.map(|v| v + normalpos.sample(&mut rng));
@@ -277,7 +277,7 @@ impl Entity {
                                     e * sz as i32 + sz as i32 / 2
                                 });
                                 let dist =
-                                    wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                                    wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                                 dist + if dist < 96_u32.pow(2) { 100_000 } else { 0 }
                             })
                             .map(|(id, _)| id)
@@ -301,7 +301,7 @@ impl Entity {
                         let wpos = site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
                             e * sz as i32 + sz as i32 / 2
                         });
-                        let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                        let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                         dist > 96_u32.pow(2)
                     })
                     .filter(|sid| {
@@ -338,7 +338,7 @@ impl Entity {
                         let wpos = site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
                             e * sz as i32 + sz as i32 / 2
                         });
-                        let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                        let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                         dist + if dist < 96_u32.pow(2) { 100_000 } else { 0 }
                     })
                     .map(|(id, _)| id)
@@ -363,14 +363,14 @@ impl Entity {
                 let wpos = site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
                     e * sz as i32 + sz as i32 / 2
                 });
-                let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
 
                 if dist < 64_u32.pow(2) {
                     Travel::InSite { site_id: target_id }
                 } else {
                     let travel_to = self.pos.xy()
                         + Vec3::from(
-                            (wpos.map(|e| e as f32 + 0.5) - self.pos.xy())
+                            (wpos.map(|e| e as f64 + 0.5) - self.pos.xy())
                                 .try_normalized()
                                 .unwrap_or_else(Vec2::zero),
                         ) * 64.0;
@@ -384,7 +384,7 @@ impl Entity {
                             travel_to.y as i32,
                             travel_to_alt,
                         ))
-                        .map(|e| e as f32)
+                        .map(|e| e as f64)
                         + Vec3::new(0.5, 0.5, 0.0);
 
                     self.controller.travel_to = Some((travel_to, destination_name));
@@ -403,7 +403,7 @@ impl Entity {
                     .map_or("".to_string(), |id| index.sites[id].name().to_string());
 
                 if let Some(wpos) = &path.get(progress) {
-                    let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                    let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
                     if dist < 16_u32.pow(2) {
                         if progress + 1 < path.len() {
                             Travel::CustomPath {
@@ -417,7 +417,7 @@ impl Entity {
                     } else {
                         let travel_to = self.pos.xy()
                             + Vec3::from(
-                                (wpos.map(|e| e as f32 + 0.5) - self.pos.xy())
+                                (wpos.map(|e| e as f64 + 0.5) - self.pos.xy())
                                     .try_normalized()
                                     .unwrap_or_else(Vec2::zero),
                             ) * 64.0;
@@ -431,7 +431,7 @@ impl Entity {
                                 travel_to.y as i32,
                                 travel_to_alt,
                             ))
-                            .map(|e| e as f32)
+                            .map(|e| e as f64)
                             + Vec3::new(0.5, 0.5, 0.0);
 
                         self.controller.travel_to = Some((travel_to, destination_name));
@@ -472,7 +472,7 @@ impl Entity {
                     } else {
                         chunkpos
                     };
-                    let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                    let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
 
                     match dist {
                         d if d < 16_u32.pow(2) => {
@@ -502,7 +502,7 @@ impl Entity {
                         _ => {
                             let travel_to = self.pos.xy()
                                 + Vec3::from(
-                                    (wpos.map(|e| e as f32 + 0.5) - self.pos.xy())
+                                    (wpos.map(|e| e as f64 + 0.5) - self.pos.xy())
                                         .try_normalized()
                                         .unwrap_or_else(Vec2::zero),
                                 ) * 64.0;
@@ -517,7 +517,7 @@ impl Entity {
                                     travel_to.y as i32,
                                     travel_to_alt,
                                 ))
-                                .map(|e| e as f32)
+                                .map(|e| e as f64)
                                 + Vec3::new(0.5, 0.5, 0.0);
                             self.controller.travel_to = Some((travel_to, destination_name));
                             self.controller.speed_factor = 0.70;
@@ -557,7 +557,7 @@ impl Entity {
                 let wpos = dest_site.center.map2(TerrainChunk::RECT_SIZE, |e, sz| {
                     e * sz as i32 + sz as i32 / 2
                 });
-                let dist = wpos.map(|e| e as f32).distance_squared(self.pos.xy()) as u32;
+                let dist = wpos.map(|e| e as f64).distance_squared(self.pos.xy()) as u32;
 
                 // Once at site, stay for a bit, then move to other site
                 if dist < 128_u32.pow(2) {
@@ -595,7 +595,7 @@ impl Entity {
                                 travel_to.y as i32,
                                 travel_to_alt,
                             ))
-                            .map(|e| e as f32)
+                            .map(|e| e as f64)
                             + Vec3::new(0.5, 0.5, 0.0);
 
                         self.controller.travel_to = Some((travel_to, destination_name));
@@ -610,7 +610,7 @@ impl Entity {
                 } else {
                     let travel_to = self.pos.xy()
                         + Vec3::from(
-                            (wpos.map(|e| e as f32 + 0.5) - self.pos.xy())
+                            (wpos.map(|e| e as f64 + 0.5) - self.pos.xy())
                                 .try_normalized()
                                 .unwrap_or_else(Vec2::zero),
                         ) * 64.0;
@@ -624,7 +624,7 @@ impl Entity {
                             travel_to.y as i32,
                             travel_to_alt,
                         ))
-                        .map(|e| e as f32)
+                        .map(|e| e as f64)
                         + Vec3::new(0.5, 0.5, 0.0);
 
                     self.controller.travel_to = Some((travel_to, destination_name));

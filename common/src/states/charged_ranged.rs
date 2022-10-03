@@ -33,9 +33,9 @@ pub struct StaticData {
     /// How much the damage scales as it is charged
     pub scaled_damage: f32,
     /// How much knockback there is with no charge
-    pub initial_knockback: f32,
+    pub initial_knockback: f64,
     /// How much the knockback scales as it is charged
-    pub scaled_knockback: f32,
+    pub scaled_knockback: f64,
     /// Projectile information
     pub projectile_body: Body,
     pub projectile_light: Option<LightEmitter>,
@@ -62,9 +62,9 @@ pub struct Data {
 
 impl Data {
     /// How complete the charge is, on a scale of 0.0 to 1.0
-    pub fn charge_frac(&self) -> f32 {
+    pub fn charge_frac(&self) -> f64 {
         if let StageSection::Charge = self.stage_section {
-            (self.timer.as_secs_f32() / self.static_data.charge_duration.as_secs_f32()).min(1.0)
+            (self.timer.as_secs_f64() / self.static_data.charge_duration.as_secs_f64()).min(1.0)
         } else {
             0.0
         }
@@ -76,7 +76,7 @@ impl CharacterBehavior for Data {
         let mut update = StateUpdate::from(data);
 
         handle_orientation(data, &mut update, 1.0, None);
-        handle_move(data, &mut update, self.static_data.move_speed);
+        handle_move(data, &mut update, self.static_data.move_speed as f64);
         handle_jump(data, output_events, &mut update, 1.0);
 
         match self.stage_section {
@@ -101,11 +101,11 @@ impl CharacterBehavior for Data {
                     let charge_frac = self.charge_frac();
                     let arrow = ProjectileConstructor::Arrow {
                         damage: self.static_data.initial_damage as f32
-                            + charge_frac * self.static_data.scaled_damage as f32,
+                            + charge_frac as f32 * self.static_data.scaled_damage as f32,
                         knockback: self.static_data.initial_knockback
                             + charge_frac * self.static_data.scaled_knockback,
                         energy_regen: self.static_data.initial_regen
-                            + charge_frac * self.static_data.scaled_regen,
+                            + charge_frac as f32 * self.static_data.scaled_regen,
                     };
                     // Fire
                     let (crit_chance, crit_mult) =
@@ -128,7 +128,7 @@ impl CharacterBehavior for Data {
                         projectile,
                         light: self.static_data.projectile_light,
                         speed: self.static_data.initial_projectile_speed
-                            + charge_frac * self.static_data.scaled_projectile_speed,
+                            + charge_frac as f32 * self.static_data.scaled_projectile_speed,
                         object: None,
                     });
 

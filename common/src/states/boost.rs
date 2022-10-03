@@ -15,7 +15,7 @@ pub struct StaticData {
     pub movement_duration: Duration,
     pub only_up: bool,
     pub speed: f32,
-    pub max_exit_velocity: f32,
+    pub max_exit_velocity: f64,
     pub ability_info: AbilityInfo,
 }
 
@@ -37,9 +37,9 @@ impl CharacterBehavior for Data {
         if self.timer < self.static_data.movement_duration {
             // Movement
             if self.static_data.only_up {
-                update.vel.0.z += self.static_data.speed * data.dt.0;
+                update.vel.0.z += self.static_data.speed as f64 * data.dt.0 as f64;
             } else {
-                update.vel.0 += *data.inputs.look_dir * self.static_data.speed * data.dt.0;
+                update.vel.0 += *data.inputs.look_dir * self.static_data.speed as f64 * data.dt.0 as f64;
             }
             update.character = CharacterState::Boost(Data {
                 timer: tick_attack_or_default(data, self.timer, None),

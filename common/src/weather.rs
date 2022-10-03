@@ -79,7 +79,7 @@ pub struct WeatherGrid {
 
 /// Transforms a world position to cell coordinates. Where (0.0, 0.0) in cell
 /// coordinates is the center of the weather cell located at (0, 0) in the grid.
-fn to_cell_pos(wpos: Vec2<f32>) -> Vec2<f32> { wpos / CELL_SIZE as f32 - 0.5 }
+fn to_cell_pos(wpos: Vec2<f64>) -> Vec2<f64> { wpos / CELL_SIZE as f64 - 0.5 }
 
 // TODO: Move consts from world to common to avoid duplication
 const LOCALITY: [Vec2<i32>; 9] = [
@@ -112,7 +112,7 @@ impl WeatherGrid {
 
     /// Get the weather at a given world position by doing bilinear
     /// interpolation between four cells.
-    pub fn get_interpolated(&self, wpos: Vec2<f32>) -> Weather {
+    pub fn get_interpolated(&self, wpos: Vec2<f64>) -> Weather {
         let cell_pos = to_cell_pos(wpos);
         let rpos = cell_pos.map(|e| e.fract() + (1.0 - e.signum()) / 2.0);
         let cell_pos = cell_pos.map(|e| e.floor());
@@ -124,7 +124,7 @@ impl WeatherGrid {
                 self.weather
                     .get(cpos + Vec2::unit_x())
                     .unwrap_or(&Weather::default()),
-                rpos.x,
+                rpos.x as f32,
             ),
             &Weather::lerp_unclamped(
                 self.weather
@@ -133,14 +133,14 @@ impl WeatherGrid {
                 self.weather
                     .get(cpos + Vec2::one())
                     .unwrap_or(&Weather::default()),
-                rpos.x,
+                rpos.x as f32,
             ),
-            rpos.y,
+            rpos.y as f32,
         )
     }
 
     /// Get the max weather near a position
-    pub fn get_max_near(&self, wpos: Vec2<f32>) -> Weather {
+    pub fn get_max_near(&self, wpos: Vec2<f64>) -> Weather {
         let cell_pos: Vec2<i32> = to_cell_pos(wpos).as_();
         LOCALITY
             .iter()

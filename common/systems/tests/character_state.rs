@@ -86,7 +86,7 @@ mod tests {
     fn orientation_shortcut() {
         let mut state = setup();
         const TESTCASES: usize = 5;
-        let testcases: [(Vec3<f32>, Vec3<f32>); TESTCASES] = [
+        let testcases: [(Vec3<f64>, Vec3<f64>); TESTCASES] = [
             // horizontal is unchanged
             (Vec3::unit_x(), Vec3::unit_x()),
             // nearly vertical takes time to adjust

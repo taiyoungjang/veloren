@@ -296,7 +296,7 @@ impl Body {
                 //
                 // Weight is proportional height, where
                 // a 1.75m character would weigh 65kg
-                65.0 * humanoid.height() / 1.75f32
+                65.0 * humanoid.height() / 1.75f64
             },
             Body::Object(obj) => obj.mass().0,
             Body::ItemDrop(item_drop) => item_drop.mass().0,
@@ -380,7 +380,7 @@ impl Body {
     /// The width (shoulder to shoulder), length (nose to tail) and height
     /// respectively (in metres)
     // Code reviewers: should we replace metres with 'block height'?
-    pub fn dimensions(&self) -> Vec3<f32> {
+    pub fn dimensions(&self) -> Vec3<f64> {
         match self {
             Body::BipedLarge(body) => match body.species {
                 biped_large::Species::Cyclops => Vec3::new(5.6, 3.0, 6.5),
@@ -516,14 +516,14 @@ impl Body {
     // Note: This is used for collisions, but it's not very accurate for shapes that
     // are very much not cylindrical. Eventually this ought to be replaced by more
     // accurate collision shapes.
-    pub fn max_radius(&self) -> f32 {
+    pub fn max_radius(&self) -> f64 {
         let dim = self.dimensions();
         let (x, y) = (dim.x, dim.y);
 
         x.max(y) / 2.0
     }
 
-    pub fn min_radius(&self) -> f32 {
+    pub fn min_radius(&self) -> f64 {
         let (_p0, _p1, radius) = self.sausage();
 
         radius
@@ -533,7 +533,7 @@ impl Body {
     /// Returns line segment and radius. See [this wiki page][stadium_wiki].
     ///
     /// [stadium_wiki]: <https://en.wikipedia.org/wiki/Stadium_(geometry)>
-    pub fn sausage(&self) -> (Vec2<f32>, Vec2<f32>, f32) {
+    pub fn sausage(&self) -> (Vec2<f64>, Vec2<f64>, f64) {
         // Consider this ascii-art stadium with radius `r` and line segment `a`
         //
         //      xxxxxxxxxxxxxxxxx
@@ -593,7 +593,7 @@ impl Body {
     /// other entity's spacing_radius. So an entity with 2.0 and an entity
     /// with 3.0 will lead to that both entities will try to keep 5.0 units
     /// away from each other.
-    pub fn spacing_radius(&self) -> f32 {
+    pub fn spacing_radius(&self) -> f64 {
         self.max_radius()
             + match self {
                 Body::QuadrupedSmall(body) => match body.species {
@@ -613,7 +613,7 @@ impl Body {
     }
 
     /// Height from the bottom to the top (in metres)
-    pub fn height(&self) -> f32 { self.dimensions().z }
+    pub fn height(&self) -> f64 { self.dimensions().z }
 
     pub fn base_energy(&self) -> u16 {
         match self {
@@ -802,7 +802,7 @@ impl Body {
         }
     }
 
-    pub fn flying_height(&self) -> f32 {
+    pub fn flying_height(&self) -> f64 {
         match self {
             Body::BirdLarge(_) => 50.0,
             Body::BirdMedium(_) => 40.0,
@@ -889,9 +889,9 @@ impl Body {
     }
 
     /// Returns the eye height for this creature.
-    pub fn eye_height(&self) -> f32 { self.height() * 0.9 }
+    pub fn eye_height(&self) -> f64 { self.height() * 0.9 }
 
-    pub fn default_light_offset(&self) -> Vec3<f32> {
+    pub fn default_light_offset(&self) -> Vec3<f64> {
         // TODO: Make this a manifest
         match self {
             Body::Object(_) => Vec3::unit_z() * 0.5,

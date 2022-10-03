@@ -369,16 +369,16 @@ impl SessionState {
                     let spawn_point = global_state
                         .profile
                         .get_spectate_position(server_name)
-                        .unwrap_or(spawn_point);
+                        .unwrap_or(spawn_point.map(|x|x as f32));
 
                     client
                         .state()
                         .ecs()
                         .write_storage()
-                        .insert(client.entity(), Pos(spawn_point))
+                        .insert(client.entity(), Pos(spawn_point.map(|x|x as f64)))
                         .expect("This shouldn't exist");
 
-                    self.scene.camera_mut().force_focus_pos(spawn_point);
+                    self.scene.camera_mut().force_focus_pos(spawn_point.map(|x|x as f64));
                 },
                 client::Event::SpectatePosition(pos) => {
                     self.scene.camera_mut().force_focus_pos(pos);
@@ -471,7 +471,7 @@ impl PlayState for SessionState {
                         fov_scaling -= 3.0 * cr.charge_frac() / 5.0;
                     }
                 }
-                camera.set_fixate(fov_scaling);
+                camera.set_fixate(fov_scaling as f32);
             } else {
                 camera.set_fixate(1.0);
             }
@@ -520,7 +520,7 @@ impl PlayState for SessionState {
 
             // Check to see whether we're aiming at anything
             let (build_target, collect_target, entity_target, mine_target, terrain_target) =
-                targets_under_cursor(&client, cam_pos, cam_dir, can_build, is_mining);
+                targets_under_cursor(&client, cam_pos.map(|x|x as f32), cam_dir, can_build, is_mining);
 
             self.interactable = select_interactable(
                 &client,
@@ -538,7 +538,7 @@ impl PlayState for SessionState {
                     let server_name = &client.server_info().name;
                     global_state.profile.set_spectate_position(
                         server_name,
-                        Some(self.scene.camera().get_focus_pos()),
+                        Some(self.scene.camera().get_focus_pos().map(|x|x as f32)),
                     );
                 }
             }
@@ -558,7 +558,7 @@ impl PlayState for SessionState {
                 mine_target.filter(|mt| is_mining && nearest_scene_dist == Some(mt.distance))
             {
                 self.scene.set_select_pos(Some(mt.position_int()));
-                Some(mt.position)
+                Some(mt.position.map(|x|x as f64))
             } else if let Some(bt) =
                 build_target.filter(|bt| can_build && nearest_scene_dist == Some(bt.distance))
             {
@@ -575,7 +575,7 @@ impl PlayState for SessionState {
             };
 
             // filled block in line of sight
-            let default_select_pos = terrain_target.map(|tt| tt.position);
+            let default_select_pos = terrain_target.map(|tt| tt.position.map(|x|x as f64));
 
             // Throw out distance info, it will be useful in the future
             self.target_entity = entity_target.map(|t| t.kind.0);
@@ -1064,16 +1064,16 @@ impl PlayState for SessionState {
                                     rel_flow.dot(Vec3::unit_z()).is_sign_negative();
                                 if !self.free_look {
                                     if is_wind_downwards {
-                                        self.scene.camera().forward_xy().into()
+                                        self.scene.camera().forward_xy().map(|x|x as f64).into()
                                     } else {
                                         let windwards = rel_flow
                                             * self
                                                 .scene
                                                 .camera()
-                                                .forward_xy()
+                                                .forward_xy().map(|x|x as f64)
                                                 .dot(rel_flow.xy())
                                                 .signum();
-                                        Plane::from(Dir::new(self.scene.camera().right()))
+                                        Plane::from(Dir::new(self.scene.camera().right().map(|x|x as f64)))
                                             .projection(windwards)
                                     }
                                 } else if is_wind_downwards {
@@ -1094,7 +1094,7 @@ impl PlayState for SessionState {
                         self.walk_forward_dir = self.scene.camera().forward_xy();
                         self.walk_right_dir = self.scene.camera().right_xy();
                         self.inputs.look_dir =
-                            Dir::from_unnormalized(cam_dir + aim_dir_offset).unwrap();
+                            Dir::from_unnormalized(cam_dir.map(|x|x as f64) + aim_dir_offset.map(|x|x as f64)).unwrap();
                     }
                 }
                 self.inputs.strafing = matches!(
@@ -1124,7 +1124,7 @@ impl PlayState for SessionState {
 
                 self.inputs.climb = self.key_state.climb();
                 self.inputs.move_z =
-                    self.key_state.swim_up as i32 as f32 - self.key_state.swim_down as i32 as f32;
+                    self.key_state.swim_up as i32 as f64 - self.key_state.swim_down as i32 as f64;
             }
 
             match self.scene.camera().get_mode() {
@@ -1134,7 +1134,7 @@ impl PlayState for SessionState {
                         // This could be different from the camera direction if free look is
                         // enabled.
                         self.inputs.move_dir =
-                            self.walk_right_dir * axis_right + self.walk_forward_dir * axis_up;
+                            (self.walk_right_dir * axis_right + self.walk_forward_dir * axis_up).map(|x|x as f64);
                     }
                 },
                 CameraMode::Freefly => {
@@ -1161,7 +1161,7 @@ impl PlayState for SessionState {
                     let pos = self.scene.camera().get_focus_pos();
                     self.scene
                         .camera_mut()
-                        .set_focus_pos(pos + dir * dt * speed);
+                        .set_focus_pos(pos + dir.map(|x|x as f64) * dt as f64 * speed as f64);
 
                     // Do not apply any movement to the player character
                     self.inputs.move_dir = Vec2::zero();
@@ -1699,7 +1699,7 @@ impl PlayState for SessionState {
                     mutable_viewpoint: mutable_viewpoint || self.free_look,
                     // Only highlight if interactable
                     target_entity: self.interactable.and_then(Interactable::entity),
-                    loaded_distance: client.loaded_distance(),
+                    loaded_distance: client.loaded_distance() as f32,
                     terrain_view_distance: client.view_distance().unwrap_or(1),
                     entity_view_distance: client
                         .view_distance()
@@ -1743,7 +1743,7 @@ impl PlayState for SessionState {
                             &scene_data,
                             &mut global_state.audio,
                             client.state(),
-                            cam_pos,
+                            cam_pos.map(|x|x as f32),
                         );
                         self.hud
                             .handle_outcome(&outcome, scene_data.client, global_state);
@@ -1789,7 +1789,7 @@ impl PlayState for SessionState {
             mutable_viewpoint,
             // Only highlight if interactable
             target_entity: self.interactable.and_then(Interactable::entity),
-            loaded_distance: client.loaded_distance(),
+            loaded_distance: client.loaded_distance() as f32,
             terrain_view_distance: client.view_distance().unwrap_or(1),
             entity_view_distance: client
                 .view_distance()

@@ -62,7 +62,7 @@ impl CharacterBehavior for Data {
         match self.static_data.movement_behavior {
             MovementBehavior::ForwardGround | MovementBehavior::Stationary => {},
             MovementBehavior::AxeHover => {
-                let new_vel_z = update.vel.0.z + GRAVITY * data.dt.0 * 0.5;
+                let new_vel_z = update.vel.0.z + GRAVITY * data.dt.0 as f64 * 0.5;
                 update.vel.0 = Vec3::new(0.0, 0.0, new_vel_z) + data.inputs.move_dir * 5.0;
             },
             MovementBehavior::Walking => {

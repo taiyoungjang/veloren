@@ -231,7 +231,7 @@ make_case_elim!(
 
 impl SpriteKind {
     #[inline]
-    pub fn solid_height(&self) -> Option<f32> {
+    pub fn solid_height(&self) -> Option<f64> {
         // Beware: the height *must* be <= `MAX_HEIGHT` or the collision system will not
         // properly detect it!
         Some(match self {

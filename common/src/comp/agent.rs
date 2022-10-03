@@ -175,13 +175,13 @@ pub struct Psyche {
     pub flee_health: f32,
     /// The distance below which the agent will see enemies if it has line of
     /// sight.
-    pub sight_dist: f32,
+    pub sight_dist: f64,
     /// The distance below which the agent can hear enemies without seeing them.
-    pub listen_dist: f32,
+    pub listen_dist: f64,
     /// The distance below which the agent will attack enemies. Should be lower
     /// than `sight_dist`. `None` implied that the agent is always aggro
     /// towards enemies that it is aware of.
-    pub aggro_dist: Option<f32>,
+    pub aggro_dist: Option<f64>,
 }
 
 impl<'a> From<&'a Body> for Psyche {
@@ -293,7 +293,7 @@ impl<'a> From<&'a Body> for Psyche {
 
 impl Psyche {
     /// The maximum distance that targets might be detected by this agent.
-    pub fn search_dist(&self) -> f32 { self.sight_dist.max(self.listen_dist) }
+    pub fn search_dist(&self) -> f64 { self.sight_dist.max(self.listen_dist) }
 }
 
 #[derive(Clone, Debug)]
@@ -320,13 +320,13 @@ pub enum AgentEvent {
 #[derive(Copy, Clone, Debug)]
 pub struct Sound {
     pub kind: SoundKind,
-    pub pos: Vec3<f32>,
+    pub pos: Vec3<f64>,
     pub vol: f32,
     pub time: f64,
 }
 
 impl Sound {
-    pub fn new(kind: SoundKind, pos: Vec3<f32>, vol: f32, time: f64) -> Self {
+    pub fn new(kind: SoundKind, pos: Vec3<f64>, vol: f32, time: f64) -> Self {
         Sound {
             kind,
             pos,
@@ -463,7 +463,7 @@ impl Timer {
 #[derive(Clone, Debug)]
 pub struct Agent {
     pub rtsim_controller: RtSimController,
-    pub patrol_origin: Option<Vec3<f32>>,
+    pub patrol_origin: Option<Vec3<f64>>,
     pub target: Option<Target>,
     pub chaser: Chaser,
     pub behavior: Behavior,
@@ -471,10 +471,10 @@ pub struct Agent {
     pub inbox: VecDeque<AgentEvent>,
     pub action_state: ActionState,
     pub timer: Timer,
-    pub bearing: Vec2<f32>,
+    pub bearing: Vec2<f64>,
     pub sounds_heard: Vec<Sound>,
     pub awareness: f32,
-    pub position_pid_controller: Option<PidController<fn(Vec3<f32>, Vec3<f32>) -> f32, 16>>,
+    pub position_pid_controller: Option<PidController<fn(Vec3<f64>, Vec3<f64>) -> f64, 16>>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -507,7 +507,7 @@ impl Agent {
     }
 
     #[must_use]
-    pub fn with_patrol_origin(mut self, origin: Vec3<f32>) -> Self {
+    pub fn with_patrol_origin(mut self, origin: Vec3<f64>) -> Self {
         self.patrol_origin = Some(origin);
         self
     }
@@ -530,7 +530,7 @@ impl Agent {
 
     // FIXME: Only one of *three* things in this method sets a location.
     #[must_use]
-    pub fn with_destination(mut self, pos: Vec3<f32>) -> Self {
+    pub fn with_destination(mut self, pos: Vec3<f64>) -> Self {
         self.psyche.flee_health = 0.0;
         self.rtsim_controller = RtSimController::with_destination(pos);
         self.behavior.allow(BehaviorCapability::SPEAK);
@@ -540,7 +540,7 @@ impl Agent {
     #[must_use]
     pub fn with_position_pid_controller(
         mut self,
-        pid: PidController<fn(Vec3<f32>, Vec3<f32>) -> f32, 16>,
+        pid: PidController<fn(Vec3<f64>, Vec3<f64>) -> f64, 16>,
     ) -> Self {
         self.position_pid_controller = Some(pid);
         self
@@ -675,17 +675,17 @@ mod tests {
 /// PID controllers are used for automatically adapting nonlinear controls (like
 /// buoyancy for airships) to target specific outcomes (i.e. a specific height)
 #[derive(Clone)]
-pub struct PidController<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> {
+pub struct PidController<F: Fn(Vec3<f64>, Vec3<f64>) -> f64, const NUM_SAMPLES: usize> {
     /// The coefficient of the proportional term
-    pub kp: f32,
+    pub kp: f64,
     /// The coefficient of the integral term
-    pub ki: f32,
+    pub ki: f64,
     /// The coefficient of the derivative term
-    pub kd: f32,
+    pub kd: f64,
     /// The setpoint that the process has as its goal
-    pub sp: Vec3<f32>,
+    pub sp: Vec3<f64>,
     /// A ring buffer of the last NUM_SAMPLES measured process variables
-    pv_samples: [(f64, Vec3<f32>); NUM_SAMPLES],
+    pv_samples: [(f64, Vec3<f64>); NUM_SAMPLES],
     /// The index into the ring buffer of process variables
     pv_idx: usize,
     /// The total integral error
@@ -695,7 +695,7 @@ pub struct PidController<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: 
     e: F,
 }
 
-impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> fmt::Debug
+impl<F: Fn(Vec3<f64>, Vec3<f64>) -> f64, const NUM_SAMPLES: usize> fmt::Debug
     for PidController<F, NUM_SAMPLES>
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -710,10 +710,10 @@ impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> fmt::Debug
     }
 }
 
-impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> PidController<F, NUM_SAMPLES> {
+impl<F: Fn(Vec3<f64>, Vec3<f64>) -> f64, const NUM_SAMPLES: usize> PidController<F, NUM_SAMPLES> {
     /// Constructs a PidController with the specified weights, setpoint,
     /// starting time, and error function
-    pub fn new(kp: f32, ki: f32, kd: f32, sp: Vec3<f32>, time: f64, e: F) -> Self {
+    pub fn new(kp: f64, ki: f64, kd: f64, sp: Vec3<f64>, time: f64, e: F) -> Self {
         Self {
             kp,
             ki,
@@ -727,7 +727,7 @@ impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> PidController
     }
 
     /// Adds a measurement of the process variable to the ringbuffer
-    pub fn add_measurement(&mut self, time: f64, pv: Vec3<f32>) {
+    pub fn add_measurement(&mut self, time: f64, pv: Vec3<f64>) {
         self.pv_idx += 1;
         self.pv_idx %= NUM_SAMPLES;
         self.pv_samples[self.pv_idx] = (time, pv);
@@ -737,7 +737,7 @@ impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> PidController
     /// The amount to set the control variable to is a weighed sum of the
     /// proportional error, the integral error, and the derivative error.
     /// https://en.wikipedia.org/wiki/PID_controller#Mathematical_form
-    pub fn calc_err(&self) -> f32 {
+    pub fn calc_err(&self) -> f64 {
         self.kp * self.proportional_err()
             + self.ki * self.integral_err()
             + self.kd * self.derivative_err()
@@ -745,13 +745,13 @@ impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> PidController
 
     /// The proportional error is the error function applied to the set point
     /// and the most recent process variable measurement
-    pub fn proportional_err(&self) -> f32 { (self.e)(self.sp, self.pv_samples[self.pv_idx].1) }
+    pub fn proportional_err(&self) -> f64 { (self.e)(self.sp, self.pv_samples[self.pv_idx].1) }
 
     /// The integral error is the error function integrated over all previous
     /// values, updated per point. The trapezoid rule for numerical integration
     /// was chosen because it's fairly easy to calculate and sufficiently
     /// accurate. https://en.wikipedia.org/wiki/Trapezoidal_rule#Uniform_grid
-    pub fn integral_err(&self) -> f32 { self.integral_error as f32 }
+    pub fn integral_err(&self) -> f64 { self.integral_error as f64 }
 
     fn update_integral_err(&mut self) {
         let f = |x| (self.e)(self.sp, x) as f64;
@@ -770,18 +770,18 @@ impl<F: Fn(Vec3<f32>, Vec3<f32>) -> f32, const NUM_SAMPLES: usize> PidController
     /// improve the accuracy of the estimate of the derivative, but it would be
     /// an estimate of the derivative error further in the past.
     /// https://en.wikipedia.org/wiki/Numerical_differentiation#Finite_differences
-    pub fn derivative_err(&self) -> f32 {
+    pub fn derivative_err(&self) -> f64 {
         let f = |x| (self.e)(self.sp, x);
         let (a, x0) = self.pv_samples[(self.pv_idx + NUM_SAMPLES - 1) % NUM_SAMPLES];
         let (b, x1) = self.pv_samples[self.pv_idx];
         let h = b - a;
-        (f(x1) - f(x0)) / h as f32
+        (f(x1) - f(x0)) / h as f64
     }
 }
 
 /// Get the PID coefficients associated with some Body, since it will likely
 /// need to be tuned differently for each body type
-pub fn pid_coefficients(body: &Body) -> (f32, f32, f32) {
+pub fn pid_coefficients(body: &Body) -> (f64, f64, f64) {
     match body {
         Body::Ship(ship::Body::DefaultAirship) => {
             let kp = 1.0;

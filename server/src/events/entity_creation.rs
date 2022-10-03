@@ -186,7 +186,7 @@ pub fn handle_create_ship(
         .create_ship(pos, ship, |ship| ship.make_collider(), mountable);
     if let Some(mut agent) = agent {
         let (kp, ki, kd) = pid_coefficients(&Body::Ship(ship));
-        fn pure_z(sp: Vec3<f32>, pv: Vec3<f32>) -> f32 { (sp - pv).z }
+        fn pure_z(sp: Vec3<f64>, pv: Vec3<f64>) -> f64 { (sp - pv).z }
         agent =
             agent.with_position_pid_controller(PidController::new(kp, ki, kd, pos.0, 0.0, pure_z));
         entity = entity.with(agent);
@@ -212,7 +212,7 @@ pub fn handle_shoot(
 
     let pos = pos.0;
 
-    let vel = *dir * speed
+    let vel = *dir * speed as f64
         + state
             .ecs()
             .read_storage::<Vel>()
@@ -257,7 +257,7 @@ pub fn handle_beam(server: &mut Server, properties: beam::Properties, pos: Pos, 
     state.create_beam(properties, pos, ori).build();
 }
 
-pub fn handle_create_waypoint(server: &mut Server, pos: Vec3<f32>) {
+pub fn handle_create_waypoint(server: &mut Server, pos: Vec3<f64>) {
     server
         .state
         .create_object(Pos(pos), comp::object::Body::CampfireLit)

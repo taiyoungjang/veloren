@@ -9,7 +9,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use vek::Vec2;
 
-const WALLRUN_ANTIGRAV: f32 = crate::consts::GRAVITY * 0.5;
+const WALLRUN_ANTIGRAV: f64 = crate::consts::GRAVITY * 0.5;
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize, Eq, Hash)]
 pub struct Data;
@@ -24,9 +24,9 @@ impl CharacterBehavior for Data {
 
         {
             let lift = WALLRUN_ANTIGRAV;
-            update.vel.0.z += data.dt.0
+            update.vel.0.z += data.dt.0 as f64
                 * lift
-                * (Vec2::<f32>::from(update.vel.0).magnitude() * 0.075)
+                * (Vec2::<f64>::from(update.vel.0).magnitude() * 0.075)
                     .min(1.0)
                     .max(0.2);
         }

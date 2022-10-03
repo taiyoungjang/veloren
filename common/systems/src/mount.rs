@@ -69,7 +69,7 @@ impl<'a> System<'a> for Sys {
                 let mounter_body = bodies.get(rider);
                 let mounting_offset = body.map_or(Vec3::unit_z(), Body::mount_offset)
                     + mounter_body.map_or(Vec3::zero(), Body::rider_offset);
-                let _ = positions.insert(rider, Pos(pos.0 + ori.to_quat() * mounting_offset));
+                let _ = positions.insert(rider, Pos(pos.0 + ori.to_quat() * mounting_offset.map(|x|x as f64) ));
                 let _ = orientations.insert(rider, ori);
                 let _ = velocities.insert(rider, vel);
             }

@@ -26,7 +26,7 @@ struct PreviousEntityState {
     time: Instant,
     on_ground: bool,
     in_water: bool,
-    distance_travelled: f32,
+    distance_travelled: f64,
 }
 
 impl Default for PreviousEntityState {
@@ -58,7 +58,7 @@ impl EventMapper for MovementEventMapper {
     ) {
         let ecs = state.ecs();
 
-        let focus_off = camera.get_focus_pos().map(f32::trunc);
+        let focus_off = camera.get_focus_pos().map(f64::trunc);
         let cam_pos = camera.dependents().cam_pos + focus_off;
 
         for (entity, pos, vel, body, physics, character) in (
@@ -70,7 +70,7 @@ impl EventMapper for MovementEventMapper {
             ecs.read_storage::<CharacterState>().maybe(),
         )
             .join()
-            .filter(|(_, e_pos, ..)| (e_pos.0.distance_squared(cam_pos)) < SFX_DIST_LIMIT_SQR)
+            .filter(|(_, e_pos, ..)| (e_pos.0.distance_squared(cam_pos.map(|x|x as f64))) < SFX_DIST_LIMIT_SQR as f64)
         {
             if let Some(character) = character {
                 let internal_state = self.event_history.entry(entity).or_default();
@@ -124,7 +124,7 @@ impl EventMapper for MovementEventMapper {
                 internal_state.on_ground = physics.on_ground.is_some();
                 internal_state.in_water = physics.in_liquid().is_some();
                 let dt = ecs.fetch::<DeltaTime>().0;
-                internal_state.distance_travelled += vel.0.magnitude() * dt;
+                internal_state.distance_travelled += vel.0.magnitude() * dt as f64;
             }
         }
 
@@ -167,9 +167,9 @@ impl MovementEventMapper {
         if let Some((event, item)) = sfx_trigger_item {
             if &previous_state.event == event {
                 match event {
-                    SfxEvent::Run(_) => previous_state.distance_travelled >= item.threshold,
-                    SfxEvent::Climb => previous_state.distance_travelled >= item.threshold,
-                    SfxEvent::QuadRun(_) => previous_state.distance_travelled >= item.threshold,
+                    SfxEvent::Run(_) => previous_state.distance_travelled as f32 >= item.threshold,
+                    SfxEvent::Climb => previous_state.distance_travelled as f32 >= item.threshold,
+                    SfxEvent::QuadRun(_) => previous_state.distance_travelled as f32 >= item.threshold,
                     _ => previous_state.time.elapsed().as_secs_f32() >= item.threshold,
                 }
             } else {
@@ -189,7 +189,7 @@ impl MovementEventMapper {
         character_state: &CharacterState,
         physics_state: &PhysicsState,
         previous_state: &PreviousEntityState,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
         underfoot_block_kind: BlockKind,
     ) -> SfxEvent {
         // Match run / roll / swim state
@@ -229,7 +229,7 @@ impl MovementEventMapper {
     /// Maps a limited set of movements for other non-humanoid entities
     fn map_non_humanoid_movement_event(
         physics_state: &PhysicsState,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
         underfoot_block_kind: BlockKind,
     ) -> SfxEvent {
         if physics_state.in_liquid().is_some() && vel.magnitude() > 2.0 {
@@ -251,7 +251,7 @@ impl MovementEventMapper {
     /// Maps a limited set of movements for quadruped entities
     fn map_quadruped_movement_event(
         physics_state: &PhysicsState,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
         underfoot_block_kind: BlockKind,
     ) -> SfxEvent {
         if physics_state.in_liquid().is_some() && vel.magnitude() > 2.0 {

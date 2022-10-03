@@ -178,10 +178,10 @@ pub type ChatMsg = GenericChatMsg<String>;
 pub type UnresolvedChatMsg = GenericChatMsg<Group>;
 
 impl<G> GenericChatMsg<G> {
-    pub const NPC_DISTANCE: f32 = 100.0;
-    pub const NPC_SAY_DISTANCE: f32 = 30.0;
-    pub const REGION_DISTANCE: f32 = 1000.0;
-    pub const SAY_DISTANCE: f32 = 100.0;
+    pub const NPC_DISTANCE: f64 = 100.0;
+    pub const NPC_SAY_DISTANCE: f64 = 30.0;
+    pub const REGION_DISTANCE: f64 = 1000.0;
+    pub const SAY_DISTANCE: f64 = 100.0;
 
     pub fn npc(uid: Uid, message: String) -> Self {
         let chat_type = ChatType::Npc(uid, rand::random());

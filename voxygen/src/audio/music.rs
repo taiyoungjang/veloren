@@ -264,7 +264,7 @@ impl MusicMgr {
                     if entity != player
                         && group == &ENEMY
                         && (player_pos.0 - pos.0).magnitude_squared()
-                            < mtm.combat_nearby_radius.powf(2.0)
+                            < mtm.combat_nearby_radius.powf(2.0) as f64
                     {
                         (health.maximum() / mtm.combat_health_factor).ceil() as u32
                     } else {

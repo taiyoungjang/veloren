@@ -269,7 +269,7 @@ impl SfxChannel {
 
     pub fn is_done(&self) -> bool { self.sink.empty() }
 
-    pub fn set_pos(&mut self, pos: Vec3<f32>) { self.pos = pos; }
+    pub fn set_pos(&mut self, pos: Vec3<f64>) { self.pos = pos.map(|x|x as f32); }
 
     pub fn update(&mut self, listener: &Listener) {
         const FALLOFF: f32 = 0.13;

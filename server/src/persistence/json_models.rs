@@ -63,7 +63,7 @@ generic_body_from_impl!(comp::bird_medium::Body);
 
 #[derive(Serialize, Deserialize)]
 pub struct CharacterPosition {
-    pub waypoint: Option<Vec3<f32>>,
+    pub waypoint: Option<Vec3<f64>>,
     pub map_marker: Option<Vec2<i32>>,
 }
 

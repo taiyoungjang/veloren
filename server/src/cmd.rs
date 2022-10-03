@@ -642,7 +642,7 @@ fn handle_make_npc(
     let mut loadout_rng = thread_rng();
     for _ in 0..number {
         let comp::Pos(pos) = position(server, target, "target")?;
-        let entity_info = EntityInfo::at(pos).with_entity_config(
+        let entity_info = EntityInfo::at(pos.map(|x|x as f32)).with_entity_config(
             config.clone(),
             Some(&entity_config),
             &mut loadout_rng,
@@ -811,7 +811,7 @@ fn handle_jump(
     args: Vec<String>,
     action: &ServerChatCommand,
 ) -> CmdResult<()> {
-    if let (Some(x), Some(y), Some(z)) = parse_cmd_args!(args, f32, f32, f32) {
+    if let (Some(x), Some(y), Some(z)) = parse_cmd_args!(args, f64, f64, f64) {
         position_mut(server, target, "target", |current_pos| {
             current_pos.0 += Vec3::new(x, y, z)
         })
@@ -829,7 +829,7 @@ fn handle_goto(
 ) -> CmdResult<()> {
     if let (Some(x), Some(y), Some(z)) = parse_cmd_args!(args, f32, f32, f32) {
         position_mut(server, target, "target", |current_pos| {
-            current_pos.0 = Vec3::new(x, y, z)
+            current_pos.0 = Vec3::new(x as f64, y as f64, z as f64)
         })
     } else {
         Err(action.help_string())
@@ -864,7 +864,7 @@ fn handle_site(
         );
 
         position_mut(server, target, "target", |current_pos| {
-            current_pos.0 = site_pos
+            current_pos.0 = site_pos.map(|x|x as f64)
         })
     } else {
         Err(action.help_string())
@@ -885,7 +885,7 @@ fn handle_home(
     let time = *server.state.mut_resource::<Time>();
 
     position_mut(server, target, "target", |current_pos| {
-        current_pos.0 = home_pos
+        current_pos.0 = home_pos.map(|x|x as f64)
     })?;
     insert_or_replace_component(
         server,
@@ -1310,11 +1310,11 @@ fn handle_spawn_airship(
     args: Vec<String>,
     _action: &ServerChatCommand,
 ) -> CmdResult<()> {
-    let angle = parse_cmd_args!(args, f32);
+    let angle = parse_cmd_args!(args, f64);
     let mut pos = position(server, target, "target")?;
     pos.0.z += 50.0;
-    const DESTINATION_RADIUS: f32 = 2000.0;
-    let angle = angle.map(|a| a * std::f32::consts::PI / 180.0);
+    const DESTINATION_RADIUS: f64 = 2000.0;
+    let angle = angle.map(|a| a * std::f64::consts::PI / 180.0);
     let destination = angle.map(|a| {
         pos.0
             + Vec3::new(
@@ -1336,7 +1336,7 @@ fn handle_spawn_airship(
         });
     if let Some(pos) = destination {
         let (kp, ki, kd) = comp::agent::pid_coefficients(&comp::Body::Ship(ship));
-        fn pure_z(sp: Vec3<f32>, pv: Vec3<f32>) -> f32 { (sp - pv).z }
+        fn pure_z(sp: Vec3<f64>, pv: Vec3<f64>) -> f64 { (sp - pv).z }
         let agent = comp::Agent::from_body(&comp::Body::Ship(ship))
             .with_destination(pos)
             .with_position_pid_controller(comp::PidController::new(kp, ki, kd, pos, 0.0, pure_z));
@@ -1358,11 +1358,11 @@ fn handle_spawn_ship(
     args: Vec<String>,
     _action: &ServerChatCommand,
 ) -> CmdResult<()> {
-    let angle = parse_cmd_args!(args, f32);
+    let angle = parse_cmd_args!(args, f64);
     let mut pos = position(server, target, "target")?;
     pos.0.z += 50.0;
-    const DESTINATION_RADIUS: f32 = 2000.0;
-    let angle = angle.map(|a| a * std::f32::consts::PI / 180.0);
+    const DESTINATION_RADIUS: f64 = 2000.0;
+    let angle = angle.map(|a| a * std::f64::consts::PI / 180.0);
     let destination = angle.map(|a| {
         pos.0
             + Vec3::new(
@@ -1384,7 +1384,7 @@ fn handle_spawn_ship(
         });
     if let Some(pos) = destination {
         let (kp, ki, kd) = comp::agent::pid_coefficients(&comp::Body::Ship(ship));
-        fn pure_z(sp: Vec3<f32>, pv: Vec3<f32>) -> f32 { (sp - pv).z }
+        fn pure_z(sp: Vec3<f64>, pv: Vec3<f64>) -> f64 { (sp - pv).z }
         let agent = comp::Agent::from_body(&comp::Body::Ship(ship))
             .with_destination(pos)
             .with_position_pid_controller(comp::PidController::new(kp, ki, kd, pos, 0.0, pure_z));
@@ -2077,7 +2077,7 @@ fn handle_light(
     _action: &ServerChatCommand,
 ) -> CmdResult<()> {
     let (opt_r, opt_g, opt_b, opt_x, opt_y, opt_z, opt_s) =
-        parse_cmd_args!(args, f32, f32, f32, f32, f32, f32, f32);
+        parse_cmd_args!(args, f32, f32, f32, f64, f64, f64, f32);
 
     let mut light_emitter = LightEmitter::default();
     let mut light_offset_opt = None;
@@ -2176,10 +2176,10 @@ fn handle_explosion(
     args: Vec<String>,
     _action: &ServerChatCommand,
 ) -> CmdResult<()> {
-    let power = parse_cmd_args!(args, f32).unwrap_or(8.0);
+    let power = parse_cmd_args!(args, f64).unwrap_or(8.0);
 
-    const MIN_POWER: f32 = 0.0;
-    const MAX_POWER: f32 = 512.0;
+    const MIN_POWER: f64 = 0.0;
+    const MAX_POWER: f64 = 512.0;
 
     if power > MAX_POWER {
         return Err(format!(
@@ -2210,9 +2210,9 @@ fn handle_explosion(
                     RadiusEffect::Entity(Effect::Damage(Damage {
                         source: DamageSource::Explosion,
                         kind: DamageKind::Energy,
-                        value: 100.0 * power,
+                        value: 100.0 * power as f32,
                     })),
-                    RadiusEffect::TerrainDestruction(power),
+                    RadiusEffect::TerrainDestruction(power as f32),
                 ],
                 radius: 3.0 * power,
                 reagent: None,
@@ -2278,7 +2278,7 @@ fn handle_spawn_wiring(
             outputs: outputs1,
             actions: Vec::new(),
         })
-        .with(comp::Density(100_f32));
+        .with(comp::Density(100_f64));
     let ent1 = builder1.build();
 
     pos.0.x += 3.0;
@@ -2309,7 +2309,7 @@ fn handle_spawn_wiring(
                 }],
             }],
         })
-        .with(comp::Density(100_f32));
+        .with(comp::Density(100_f64));
     let ent2 = builder2.build();
 
     pos.0.x += 3.0;
@@ -2939,7 +2939,7 @@ fn handle_remove_lights(
     args: Vec<String>,
     _action: &ServerChatCommand,
 ) -> CmdResult<()> {
-    let opt_radius = parse_cmd_args!(args, f32);
+    let opt_radius = parse_cmd_args!(args, f64);
     let player_pos = position(server, target, "target")?;
     let mut to_delete = vec![];
 
@@ -3663,7 +3663,7 @@ fn handle_weather_zone(
 
         let mut add_zone = |weather: weather::Weather| {
             if let Ok(pos) = position(server, client, "player") {
-                let pos = pos.0.xy() / weather::CELL_SIZE as f32;
+                let pos = pos.0.xy().map(|x|x as f32) / weather::CELL_SIZE as f32;
                 server
                     .state
                     .ecs_mut()

@@ -63,7 +63,7 @@ pub struct TargetInfo<'a> {
     pub inventory: Option<&'a Inventory>,
     pub stats: Option<&'a Stats>,
     pub health: Option<&'a Health>,
-    pub pos: Vec3<f32>,
+    pub pos: Vec3<f64>,
     pub ori: Option<&'a Ori>,
     pub char_state: Option<&'a CharacterState>,
     pub energy: Option<&'a Energy>,
@@ -144,7 +144,7 @@ impl Attack {
                 if let (Some(CharacterState::BasicBlock(data)), Some(ori)) =
                     (target.char_state, target.ori)
                 {
-                    if ori.look_vec().angle_between(-*dir) < data.static_data.max_angle.to_radians()
+                    if ori.look_vec().angle_between(-*dir) < data.static_data.max_angle.to_radians() as f64
                     {
                         let parry = matches!(data.stage_section, StageSection::Buildup);
                         emit_outcome(Outcome::Block {
@@ -321,7 +321,7 @@ impl Attack {
                 for effect in damage.effects.iter() {
                     match effect {
                         CombatEffect::Knockback(kb) => {
-                            let impulse = kb.calculate_impulse(dir) * strength_modifier;
+                            let impulse = kb.calculate_impulse(dir) * strength_modifier as f64;
                             if !impulse.is_approx_zero() {
                                 emit(ServerEvent::Knockback {
                                     entity: target.entity,
@@ -468,7 +468,7 @@ impl Attack {
                 is_applied = true;
                 match effect.effect {
                     CombatEffect::Knockback(kb) => {
-                        let impulse = kb.calculate_impulse(dir) * strength_modifier;
+                        let impulse = kb.calculate_impulse(dir) * strength_modifier as f64;
                         if !impulse.is_approx_zero() {
                             emit(ServerEvent::Knockback {
                                 entity: target.entity,
@@ -897,7 +897,7 @@ impl Damage {
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Knockback {
     pub direction: KnockbackDir,
-    pub strength: f32,
+    pub strength: f64,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -911,7 +911,7 @@ pub enum KnockbackDir {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Knockback {
-    pub fn calculate_impulse(self, dir: Dir) -> Vec3<f32> {
+    pub fn calculate_impulse(self, dir: Dir) -> Vec3<f64> {
         // TEMP until source knockback values have been updated
         50.0 * match self.direction {
             KnockbackDir::Away => self.strength * *Dir::slerp(dir, Dir::new(Vec3::unit_z()), 0.5),
@@ -926,7 +926,7 @@ impl Knockback {
     }
 
     #[must_use]
-    pub fn modify_strength(mut self, power: f32) -> Self {
+    pub fn modify_strength(mut self, power: f64) -> Self {
         self.strength *= power;
         self
     }
@@ -1032,7 +1032,7 @@ fn weapon_rating<T: ItemDesc>(item: &T, _msm: &MaterialStatManifest) -> f32 {
         let power_rating = stats.power;
         let speed_rating = stats.speed - 1.0;
         let crit_chance_rating = (stats.crit_chance - 0.1) * 10.0;
-        let range_rating = stats.range - 1.0;
+        let range_rating = stats.range as f32 - 1.0;
         let effect_rating = stats.effect_power - 1.0;
         let equip_time_rating = 0.5 - stats.equip_time_secs;
         let energy_efficiency_rating = stats.energy_efficiency - 1.0;

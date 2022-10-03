@@ -103,8 +103,8 @@ pub trait ReadVol: BaseVol {
     /// `for_each`.
     fn ray(
         &self,
-        from: Vec3<f32>,
-        to: Vec3<f32>,
+        from: Vec3<f64>,
+        to: Vec3<f64>,
     ) -> Ray<Self, fn(&Self::Vox) -> bool, fn(&Self::Vox, Vec3<i32>)>
     where
         Self: Sized,

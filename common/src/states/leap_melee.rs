@@ -73,11 +73,11 @@ impl CharacterBehavior for Data {
                 if self.timer < self.static_data.movement_duration {
                     // Apply jumping force
                     let progress = 1.0
-                        - self.timer.as_secs_f32()
-                            / self.static_data.movement_duration.as_secs_f32();
+                        - self.timer.as_secs_f64()
+                            / self.static_data.movement_duration.as_secs_f64();
                     handle_forced_movement(data, &mut update, ForcedMovement::Leap {
-                        vertical: self.static_data.vertical_leap_strength,
-                        forward: self.static_data.forward_leap_strength,
+                        vertical: self.static_data.vertical_leap_strength as f64,
+                        forward: self.static_data.forward_leap_strength as f64,
                         progress,
                         direction: MovementDirection::Look,
                     });

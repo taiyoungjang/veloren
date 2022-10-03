@@ -142,7 +142,7 @@ impl Site {
         const MAX_ITERS: usize = 4096;
         let range = -(w as i32) / 2..w as i32 - (w as i32 + 1) / 2;
         let heuristic = |tile: &Vec2<i32>| {
-            let mut max_cost = (tile.distance_squared(b) as f32).sqrt();
+            let mut max_cost = (tile.distance_squared(b) as f64).sqrt();
             for y in range.clone() {
                 for x in range.clone() {
                     if self.tiles.get(*tile + Vec2::new(x, y)).is_obstacle() {
@@ -165,7 +165,7 @@ impl Site {
                 |a, b| {
                     let alt_a = land.get_alt_approx(self.tile_center_wpos(*a));
                     let alt_b = land.get_alt_approx(self.tile_center_wpos(*b));
-                    (alt_a - alt_b).abs() / TILE_SIZE as f32
+                    (alt_a - alt_b).abs() as f64 / TILE_SIZE as f64
                 },
                 |tile| *tile == b,
             )

@@ -19,7 +19,7 @@ use crate::{
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::{f32::consts::PI, ops::Sub, time::Duration};
+use std::{f64::consts::PI, ops::Sub, time::Duration};
 use vek::*;
 
 /// Separated out to condense update portions of character state
@@ -125,10 +125,10 @@ impl CharacterBehavior for Data {
 
                         // Ray cast to check where summon should happen
                         let summon_frac =
-                            self.summon_count as f32 / self.static_data.summon_amount as f32;
+                            self.summon_count as f64 / self.static_data.summon_amount as f64;
 
                         let length = rand::thread_rng().gen_range(
-                            self.static_data.summon_distance.0..=self.static_data.summon_distance.1,
+                            self.static_data.summon_distance.0 as f64 ..=self.static_data.summon_distance.1 as f64,
                         );
 
                         // Summon in a clockwise fashion

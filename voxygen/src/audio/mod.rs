@@ -262,7 +262,7 @@ impl AudioFrontend {
     pub fn emit_sfx(
         &mut self,
         trigger_item: Option<(&SfxEvent, &SfxTriggerItem)>,
-        position: Vec3<f32>,
+        position: Vec3<f64>,
         volume: Option<f32>,
         underwater: bool,
     ) {
@@ -295,7 +295,7 @@ impl AudioFrontend {
     pub fn emit_filtered_sfx(
         &mut self,
         trigger_item: Option<(&SfxEvent, &SfxTriggerItem)>,
-        position: Vec3<f32>,
+        position: Vec3<f64>,
         volume: Option<f32>,
         freq: Option<u32>,
         underwater: bool,

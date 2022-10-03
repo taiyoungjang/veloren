@@ -36,13 +36,13 @@ pub struct Dependents {
     /// Specifically there for satisfying our treeculler dependency, which can't
     /// handle inverted depth planes.
     pub proj_mat_treeculler: Mat4<f32>,
-    pub cam_pos: Vec3<f32>,
+    pub cam_pos: Vec3<f64>,
     pub cam_dir: Vec3<f32>,
 }
 
 pub struct Camera {
-    tgt_focus: Vec3<f32>,
-    focus: Vec3<f32>,
+    tgt_focus: Vec3<f64>,
+    focus: Vec3<f64>,
     tgt_ori: Vec3<f32>,
     ori: Vec3<f32>,
     tgt_dist: f32,
@@ -406,16 +406,16 @@ impl Camera {
                     let transformed = Vec3::new(pos.x, pos.y, pos.z);
                     transformed + 0.6 * (fwd.cross(*padding) + fwd.cross(*padding).cross(fwd))
                 })
-                .chain([(self.focus - self.forward() * (self.dist + 0.5))])  // Padding to behind
+                .chain([(self.focus.map(|x|x as f32) - self.forward() * (self.dist + 0.5))])  // Padding to behind
                 .map(|pos| {
                     match terrain
-                        .ray(self.focus, pos)
+                        .ray(self.focus.map(|x|x as f64), pos.map(|x|x as f64) )
                         .ignore_error()
                         .max_iter(500)
                         .until(is_transparent)
                         .cast()
                     {
-                        (d, Ok(Some(_))) => f32::min(d, self.tgt_dist),
+                        (d, Ok(Some(_))) => f32::min(d as f32, self.tgt_dist),
                         (_, Ok(None)) => self.dist,
                         (_, Err(_)) => self.dist,
                     }
@@ -446,16 +446,16 @@ impl Camera {
         is_transparent: fn(&V::Vox) -> bool,
     ) {
         let dist = {
-            let (start, end) = (self.focus - self.forward() * self.dist, self.focus);
+            let (start, end) = (self.focus.map(|x|x as f32) - self.forward() * self.dist, self.focus.map(|x|x as f32));
 
             match terrain
-                .ray(start, end)
+                .ray(start.map(|x|x as f64), end.map(|x|x as f64))
                 .ignore_error()
                 .max_iter(500)
                 .until(|b| !is_transparent(b))
                 .cast()
             {
-                (d, Ok(Some(_))) => f32::min(self.dist - d - 0.03, self.dist),
+                (d, Ok(Some(_))) => f32::min(self.dist - d as f32 - 0.03, self.dist),
                 (_, Ok(None)) => self.dist,
                 (_, Err(_)) => self.dist,
             }
@@ -474,7 +474,7 @@ impl Camera {
             * Mat4::rotation_x(self.ori.y)
             * Mat4::rotation_y(self.ori.x)
             * Mat4::rotation_3d(PI / 2.0, -Vec4::unit_x())
-            * Mat4::translation_3d(-self.focus.map(|e| e.fract()));
+            * Mat4::translation_3d(-self.focus.map(|e| (e as f32).fract()));
         let view_mat_inv: Mat4<f32> = view_mat.inverted();
 
         let fov = self.get_effective_fov();
@@ -492,7 +492,7 @@ impl Camera {
             proj_mat,
             proj_mat_inv: proj_mat.inverted(),
             proj_mat_treeculler,
-            cam_pos: Vec3::from(view_mat_inv * Vec4::unit_w()),
+            cam_pos: Vec3::from(view_mat_inv.map(|x|x as f64) * Vec4::unit_w()),
             cam_dir: Vec3::from(view_mat_inv * -Vec4::unit_z()),
         }
     }
@@ -501,7 +501,7 @@ impl Camera {
         Frustum::from_modelview_projection(
             (dependents.proj_mat_treeculler
                 * dependents.view_mat
-                * Mat4::translation_3d(-self.focus.map(|e| e.trunc())))
+                * Mat4::translation_3d(-self.focus.map(|e| (e as f32).trunc())))
             .into_col_arrays(),
         )
     }
@@ -608,7 +608,7 @@ impl Camera {
             let lerped_focus = Lerp::lerp(
                 self.focus,
                 self.tgt_focus,
-                (delta as f32) / self.interp_time()
+                (delta as f64) / self.interp_time() as f64
                     * if matches!(self.mode, CameraMode::FirstPerson) {
                         2.0
                     } else {
@@ -652,13 +652,13 @@ impl Camera {
     }
 
     /// Get the focus position of the camera.
-    pub fn get_focus_pos(&self) -> Vec3<f32> { self.focus }
+    pub fn get_focus_pos(&self) -> Vec3<f64> { self.focus }
 
     /// Set the focus position of the camera.
-    pub fn set_focus_pos(&mut self, focus: Vec3<f32>) { self.tgt_focus = focus; }
+    pub fn set_focus_pos(&mut self, focus: Vec3<f64>) { self.tgt_focus = focus; }
 
     /// Set the focus position of the camera, without lerping.
-    pub fn force_focus_pos(&mut self, focus: Vec3<f32>) {
+    pub fn force_focus_pos(&mut self, focus: Vec3<f64>) {
         self.tgt_focus = focus;
         self.focus = focus;
     }

@@ -49,7 +49,7 @@ impl EventMapper for CampfireEventMapper {
         _client: &Client,
     ) {
         let ecs = state.ecs();
-        let focus_off = camera.get_focus_pos().map(f32::trunc);
+        let focus_off = camera.get_focus_pos().map(f64::trunc);
         let cam_pos = camera.dependents().cam_pos + focus_off;
         for (entity, body, pos) in (
             &ecs.entities(),
@@ -57,7 +57,7 @@ impl EventMapper for CampfireEventMapper {
             &ecs.read_storage::<Pos>(),
         )
             .join()
-            .filter(|(_, _, e_pos)| (e_pos.0.distance_squared(cam_pos)) < SFX_DIST_LIMIT_SQR)
+            .filter(|(_, _, e_pos)| (e_pos.0.distance_squared(cam_pos.map(|x|x as f64))) < SFX_DIST_LIMIT_SQR as f64)
         {
             if let Body::Object(object::Body::CampfireLit) = body {
                 let internal_state = self.event_history.entry(entity).or_default();

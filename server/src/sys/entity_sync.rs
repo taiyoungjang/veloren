@@ -269,17 +269,17 @@ impl<'a> System<'a> for Sys {
                             let id_staggered_tick = tick + entity.id() as u64;
 
                             // More entities farther away so checks start there
-                            if distance_sq > 500.0f32.powi(2) {
+                            if distance_sq > 500.0f64.powi(2) {
                                 id_staggered_tick % 32 == 0
-                            } else if distance_sq > 300.0f32.powi(2) {
+                            } else if distance_sq > 300.0f64.powi(2) {
                                 id_staggered_tick % 16 == 0
-                            } else if distance_sq > 200.0f32.powi(2) {
+                            } else if distance_sq > 200.0f64.powi(2) {
                                 id_staggered_tick % 8 == 0
-                            } else if distance_sq > 120.0f32.powi(2) {
+                            } else if distance_sq > 120.0f64.powi(2) {
                                 id_staggered_tick % 6 == 0
-                            } else if distance_sq > 64.0f32.powi(2) {
+                            } else if distance_sq > 64.0f64.powi(2) {
                                 id_staggered_tick % 3 == 0
-                            } else if distance_sq > 24.0f32.powi(2) {
+                            } else if distance_sq > 24.0f64.powi(2) {
                                 id_staggered_tick % 2 == 0
                             } else {
                                 true
@@ -382,11 +382,11 @@ impl<'a> System<'a> for Sys {
 
         // Sync outcomes
         for (presence, pos, client) in (presences.maybe(), positions.maybe(), &clients).join() {
-            let is_near = |o_pos: Vec3<f32>| {
+            let is_near = |o_pos: Vec3<f64>| {
                 pos.zip_with(presence, |pos, presence| {
                     pos.0.xy().distance_squared(o_pos.xy())
-                        < (presence.entity_view_distance.current() as f32
-                            * TerrainChunkSize::RECT_SIZE.x as f32)
+                        < (presence.entity_view_distance.current() as f64
+                            * TerrainChunkSize::RECT_SIZE.x as f64)
                             .powi(2)
                 })
             };

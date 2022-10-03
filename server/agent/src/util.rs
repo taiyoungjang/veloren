@@ -48,7 +48,7 @@ pub fn try_owner_alignment<'a>(
 
 /// Projectile motion: Returns the direction to aim for the projectile to reach
 /// target position. Does not take any forces but gravity into account.
-pub fn aim_projectile(speed: f32, pos: Vec3<f32>, tgt: Vec3<f32>) -> Option<Dir> {
+pub fn aim_projectile(speed: f64, pos: Vec3<f64>, tgt: Vec3<f64>) -> Option<Dir> {
     let mut to_tgt = tgt - pos;
     let dist_sqrd = to_tgt.xy().magnitude_squared();
     let u_sqrd = speed.powi(2);
@@ -70,8 +70,8 @@ pub fn get_entity_by_id(id: u64, read_data: &ReadData) -> Option<EcsEntity> {
 /// Will return true when score of letting target escape is higher then the
 /// score of continuing the pursue, false otherwise.
 pub fn stop_pursuing(
-    dist_to_target_sqrd: f32,
-    dist_to_home_sqrd: f32,
+    dist_to_target_sqrd: f64,
+    dist_to_home_sqrd: f64,
     own_health_fraction: f32,
     target_health_fraction: f32,
     dur_since_last_attacked: f64,
@@ -86,25 +86,25 @@ pub fn stop_pursuing(
 
 /// Scores the benefit of continuing the pursue in value from 0 to infinity.
 fn should_continue_to_pursue(
-    dist_to_target_sqrd: f32,
+    dist_to_target_sqrd: f64,
     psyche: &Psyche,
     target_health_fraction: f32,
-) -> f32 {
-    let aggression_score = (1.0 / psyche.flee_health.max(0.25))
+) -> f64 {
+    let aggression_score = (1.0 / psyche.flee_health.max(0.25)) as f64
         * psyche.aggro_dist.unwrap_or(psyche.sight_dist)
         * psyche.sight_dist;
 
-    (100.0 * aggression_score) / (dist_to_target_sqrd * target_health_fraction)
+    (100.0 * aggression_score) / (dist_to_target_sqrd * target_health_fraction as f64)
 }
 
 /// Scores the benefit of letting the target escape in a value from 0 to
 /// infinity.
 fn should_let_target_escape(
-    dist_to_home_sqrd: f32,
+    dist_to_home_sqrd: f64,
     dur_since_last_attacked: f64,
     own_health_fraction: f32,
-) -> f32 {
-    (dist_to_home_sqrd / own_health_fraction) * dur_since_last_attacked as f32 * 0.005
+) -> f64 {
+    (dist_to_home_sqrd / own_health_fraction as f64) * dur_since_last_attacked  * 0.005
 }
 
 pub fn entity_looks_like_cultist(entity: EcsEntity, read_data: &ReadData) -> bool {

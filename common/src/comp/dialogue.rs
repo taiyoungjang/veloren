@@ -17,7 +17,7 @@ pub enum PersonType {
 #[derive(Clone, Debug)]
 pub struct AskedPerson {
     pub person_type: PersonType,
-    pub origin: Option<Vec3<f32>>,
+    pub origin: Option<Vec3<f64>>,
 }
 
 impl AskedPerson {

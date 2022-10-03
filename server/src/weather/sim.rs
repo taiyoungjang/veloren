@@ -152,10 +152,10 @@ impl WeatherSim {
 
                 if cell.rain > 0.2 && cell.cloud > 0.15 && thread_rng().gen_bool(0.01) {
                     let wpos = wpos.map(|e| {
-                        e as f32 + thread_rng().gen_range(-1.0..1.0) * CELL_SIZE as f32 * 0.5
+                        e as f64 + thread_rng().gen_range(-1.0..1.0) * CELL_SIZE as f64 * 0.5
                     });
                     outcomes.emit_now(Outcome::Lightning {
-                        pos: wpos.with_z(world.sim().get_alt_approx(wpos.as_()).unwrap_or(0.0)),
+                        pos: wpos.with_z(world.sim().get_alt_approx(wpos.as_()).unwrap_or(0.0) as f64),
                     });
                 }
             }

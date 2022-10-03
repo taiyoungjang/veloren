@@ -83,8 +83,8 @@ impl SpatialGrid {
     // the function)
     pub fn in_circle_aabr(
         &self,
-        center: Vec2<f32>,
-        radius: f32,
+        center: Vec2<f64>,
+        radius: f64,
     ) -> impl Iterator<Item = specs::Entity> + '_ {
         let center = center.map(|e| e as i32);
         let radius = radius.ceil() as i32;

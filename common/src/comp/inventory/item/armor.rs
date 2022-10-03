@@ -58,7 +58,7 @@ impl Friction {
     }
 
     /// longitudinal (forward) and lateral (side) friction
-    pub fn get_friction(&self, b: BlockKind) -> (f32, f32) {
+    pub fn get_friction(&self, b: BlockKind) -> (f64, f64) {
         match (self, b) {
             (Friction::Ski, BlockKind::Snow) => (0.01, 0.95),
             (Friction::Ski, BlockKind::Ice) => (0.001, 0.5),

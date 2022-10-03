@@ -29,8 +29,8 @@ impl From<&JoinData<'_>> for Data {
             // The inflated dimensions are hopefully only a temporary
             // bandaid for the poor glide ratio experienced under 2.5G.
             // A span/chord ratio of 4.5 gives an AR of ~5.73.
-            span_length: scale * 4.5,
-            chord_length: scale,
+            span_length: scale as f32 * 4.5,
+            chord_length: scale as f32,
             ori: *data.ori,
         }
     }
@@ -69,7 +69,7 @@ impl CharacterBehavior for Data {
                             Ori::from(data.inputs.look_dir).pitched_up(0.6),
                             (1.0 + data.inputs.look_dir.dot(*data.ori.look_dir()).max(0.0)) / 3.0,
                         ),
-                        5.0 * data.dt.0,
+                        5.0 * data.dt.0 as f64,
                     ),
                     ..*self
                 })

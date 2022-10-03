@@ -22,29 +22,29 @@ pub struct HealthChangeInfo {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Outcome {
     Explosion {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         power: f32,
-        radius: f32,
+        radius: f64,
         is_attack: bool,
         reagent: Option<Reagent>, // How can we better define this?
     },
     Lightning {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
     },
     ProjectileShot {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         body: comp::Body,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
     },
     ProjectileHit {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         body: comp::Body,
-        vel: Vec3<f32>,
+        vel: Vec3<f64>,
         source: Option<Uid>,
         target: Option<Uid>,
     },
     Beam {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         specifier: beam::FrontendSpecifier,
     },
     ExpChange {
@@ -66,41 +66,41 @@ pub enum Outcome {
         color: Option<Rgb<u8>>,
     },
     SummonedCreature {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         body: comp::Body,
     },
     HealthChange {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         info: HealthChangeInfo,
     },
     Death {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
     },
     Block {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         parry: bool,
         uid: Uid,
     },
     PoiseChange {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         state: PoiseState,
     },
     GroundSlam {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
     },
     Utterance {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         body: comp::Body,
         kind: UtteranceKind,
     },
     Glider {
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         wielded: bool,
     },
 }
 
 impl Outcome {
-    pub fn get_pos(&self) -> Option<Vec3<f32>> {
+    pub fn get_pos(&self) -> Option<Vec3<f64>> {
         match self {
             Outcome::Explosion { pos, .. }
             // TODO: Include this, but allow it to be sent to clients when outside of the VD
@@ -116,7 +116,7 @@ impl Outcome {
             | Outcome::GroundSlam { pos }
             | Outcome::Utterance { pos, .. }
             | Outcome::Glider { pos, .. } => Some(*pos),
-            Outcome::BreakBlock { pos, .. } => Some(pos.map(|e| e as f32 + 0.5)),
+            Outcome::BreakBlock { pos, .. } => Some(pos.map(|e| e as f64 + 0.5)),
             Outcome::ExpChange { .. }
             | Outcome::ComboChange { .. }
             | Outcome::Lightning { .. }

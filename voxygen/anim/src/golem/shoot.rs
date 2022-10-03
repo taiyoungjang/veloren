@@ -48,7 +48,7 @@ impl Animation for ShootAnimation {
         next.shoulder_l.orientation =
             Quaternion::rotation_y(0.0) * Quaternion::rotation_z(move1 * 0.7);
 
-        next.shoulder_r.orientation = Quaternion::rotation_x(move1 * (look_dir.z * 1.2 + PI / 2.0))
+        next.shoulder_r.orientation = Quaternion::rotation_x(move1 * (look_dir.z as f32 * 1.2 + PI / 2.0))
             * Quaternion::rotation_y(move1 * 0.0);
 
         next.hand_l.orientation =

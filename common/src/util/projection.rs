@@ -9,7 +9,7 @@ pub trait Projection<T> {
 
 // Impls
 
-impl Projection<Vec2<f32>> for Vec2<f32> {
+impl Projection<Vec2<f64>> for Vec2<f64> {
     type Output = Self;
 
     fn projected(self, v: &Self) -> Self::Output {
@@ -18,7 +18,7 @@ impl Projection<Vec2<f32>> for Vec2<f32> {
     }
 }
 
-impl Projection<Vec3<f32>> for Vec3<f32> {
+impl Projection<Vec3<f64>> for Vec3<f64> {
     type Output = Self;
 
     fn projected(self, v: &Self) -> Self::Output {

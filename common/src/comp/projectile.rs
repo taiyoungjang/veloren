@@ -46,52 +46,52 @@ impl Component for Projectile {
 pub enum ProjectileConstructor {
     Arrow {
         damage: f32,
-        knockback: f32,
+        knockback: f64,
         energy_regen: f32,
     },
     Fireball {
         damage: f32,
-        radius: f32,
+        radius: f64,
         energy_regen: f32,
         min_falloff: f32,
     },
     Frostball {
         damage: f32,
-        radius: f32,
+        radius: f64,
         min_falloff: f32,
     },
     Poisonball {
         damage: f32,
-        radius: f32,
+        radius: f64,
         min_falloff: f32,
     },
     NecroticSphere {
         damage: f32,
-        radius: f32,
+        radius: f64,
         min_falloff: f32,
     },
     Possess,
     ClayRocket {
         damage: f32,
-        radius: f32,
-        knockback: f32,
+        radius: f64,
+        knockback: f64,
         min_falloff: f32,
     },
     Snowball {
         damage: f32,
-        radius: f32,
+        radius: f64,
         min_falloff: f32,
     },
     ExplodingPumpkin {
         damage: f32,
-        radius: f32,
-        knockback: f32,
+        radius: f64,
+        knockback: f64,
         min_falloff: f32,
     },
     DagonBomb {
         damage: f32,
-        radius: f32,
-        knockback: f32,
+        radius: f64,
+        knockback: f64,
         min_falloff: f32,
     },
 }
@@ -525,7 +525,7 @@ impl ProjectileConstructor {
 
     // TODO: split this to three methods per stat
     #[must_use]
-    pub fn modified_projectile(mut self, power: f32, regen: f32, range: f32) -> Self {
+    pub fn modified_projectile(mut self, power: f32, regen: f32, range: f64) -> Self {
         use ProjectileConstructor::*;
         match self {
             Arrow {

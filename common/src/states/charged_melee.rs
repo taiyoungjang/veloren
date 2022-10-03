@@ -120,7 +120,7 @@ impl CharacterBehavior for Data {
                         data.entity,
                         self.static_data
                             .melee_constructor
-                            .handle_scaling(self.charge_amount)
+                            .handle_scaling(self.charge_amount as f64)
                             .create_melee(crit_data, buff_strength),
                     );
 

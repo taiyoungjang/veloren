@@ -32,7 +32,7 @@ use vek::*;
 /// The density of the fluid as a function of submersion ratio in given fluid
 /// where it is assumed that any unsubmersed part is is air.
 // TODO: Better suited partial submersion curve?
-fn fluid_density(height: f32, fluid: &Fluid) -> Density {
+fn fluid_density(height: f64, fluid: &Fluid) -> Density {
     // If depth is less than our height (partial submersion), remove
     // fluid density based on the ratio of displacement to full volume.
     let immersion = fluid
@@ -49,7 +49,7 @@ fn integrate_forces(
     density: &Density,
     mass: &Mass,
     fluid: &Fluid,
-    gravity: f32,
+    gravity: f64,
 ) -> Vel {
     let dim = body.dimensions();
     let height = dim.z;
@@ -61,7 +61,7 @@ fn integrate_forces(
     // Aerodynamic/hydrodynamic forces
     if !rel_flow.0.is_approx_zero() {
         debug_assert!(!rel_flow.0.map(|a| a.is_nan()).reduce_or());
-        let impulse = dt.0 * body.aerodynamic_forces(&rel_flow, fluid_density.0, wings);
+        let impulse = dt.0 as f64 * body.aerodynamic_forces(&rel_flow, fluid_density.0, wings);
         debug_assert!(!impulse.map(|a| a.is_nan()).reduce_or());
         if !impulse.is_approx_zero() {
             let new_v = vel.0 + impulse / mass.0;
@@ -83,13 +83,13 @@ fn integrate_forces(
 
     // Hydrostatic/aerostatic forces
     // modify gravity to account for the effective density as a result of buoyancy
-    let down_force = dt.0 * gravity * (density.0 - fluid_density.0) / density.0;
+    let down_force = dt.0 as f64 * gravity * (density.0 - fluid_density.0) / density.0;
     vel.0.z -= down_force;
 
     vel
 }
 
-fn calc_z_limit(char_state_maybe: Option<&CharacterState>, collider: &Collider) -> (f32, f32) {
+fn calc_z_limit(char_state_maybe: Option<&CharacterState>, collider: &Collider) -> (f64, f64) {
     let modifier = if char_state_maybe.map_or(false, |c_s| c_s.is_dodge() || c_s.is_glide()) {
         0.5
     } else {
@@ -212,7 +212,7 @@ impl<'a> PhysicsData<'a> {
             let (z_min, z_max) = (z_min * scale, z_max * scale);
             let half_height = (z_max - z_min) / 2.0;
 
-            phys_cache.velocity_dt = vel.0 * self.read.dt.0;
+            phys_cache.velocity_dt = vel.0 * self.read.dt.0 as f64;
             let entity_center = position.0 + Vec3::new(0.0, 0.0, z_min + half_height);
             let flat_radius = collider.bounding_radius() * scale;
             let radius = (flat_radius.powi(2) + half_height.powi(2)).sqrt();
@@ -240,7 +240,7 @@ impl<'a> PhysicsData<'a> {
                     //
                     // Other advantage of early-return is that we don't
                     // later divide by zero and return NaN
-                    if len < f32::EPSILON * 10.0 {
+                    if len < f64::EPSILON * 10.0 {
                         Some((*p0, *p0))
                     } else {
                         // Apply orientation to origins of prism.
@@ -382,7 +382,7 @@ impl<'a> PhysicsData<'a> {
 
                     let is_projectile = projectile.is_some();
 
-                    let mut vel_delta = Vec3::zero();
+                    let mut vel_delta:Vec3<f64> = Vec3::zero();
 
                     let query_center = previous_cache.center.xy();
                     let query_radius = previous_cache.collision_boundary;
@@ -434,7 +434,7 @@ impl<'a> PhysicsData<'a> {
 
                                 entity_entity_collision_checks += 1;
 
-                                const MIN_COLLISION_DIST: f32 = 0.3;
+                                const MIN_COLLISION_DIST: f64 = 0.3;
 
                                 let increments = ((previous_cache.velocity_dt
                                     - previous_cache_other.velocity_dt)
@@ -443,12 +443,12 @@ impl<'a> PhysicsData<'a> {
                                     .max(1.0)
                                     .ceil()
                                     as usize;
-                                let step_delta = 1.0 / increments as f32;
+                                let step_delta = 1.0 / increments as f64;
 
                                 let mut collision_registered = false;
 
                                 for i in 0..increments {
-                                    let factor = i as f32 * step_delta;
+                                    let factor = i as f64 * step_delta;
                                     // We are not interested if collision succeed
                                     // or no as of now.
                                     // Collision reaction is done inside.
@@ -491,7 +491,7 @@ impl<'a> PhysicsData<'a> {
                         );
 
                     // Change velocity
-                    vel.0 += vel_delta * read.dt.0;
+                    vel.0 += vel_delta * read.dt.0 as f64;
 
                     // Metrics
                     PhysicsMetrics {
@@ -647,7 +647,7 @@ impl<'a> PhysicsData<'a> {
 
                         match physics_state.in_fluid {
                             None => {
-                                vel.0.z -= dt.0 * GRAVITY;
+                                vel.0.z -= dt.0 as f64 * GRAVITY;
                             },
                             Some(fluid) => {
                                 let wings = match character_state {
@@ -657,8 +657,8 @@ impl<'a> PhysicsData<'a> {
                                         ori,
                                         ..
                                     })) => Some(Wings {
-                                        aspect_ratio,
-                                        planform_area,
+                                        aspect_ratio: aspect_ratio as f64,
+                                        planform_area: planform_area as f64,
                                         ori,
                                     }),
 
@@ -793,7 +793,7 @@ impl<'a> PhysicsData<'a> {
 
                     // Don't move if we're not in a loaded chunk
                     let pos_delta = if in_loaded_chunk {
-                        vel.0 * read.dt.0
+                        vel.0 * read.dt.0 as f64
                     } else {
                         Vec3::zero()
                     };
@@ -1092,20 +1092,20 @@ impl<'a> PhysicsData<'a> {
 
                                     // TODO: Cache the matrices here to avoid recomputing
 
-                                    let transform_last_from = Mat4::<f32>::translation_3d(
+                                    let transform_last_from = Mat4::<f64>::translation_3d(
                                         previous_cache_other.pos.unwrap_or(*pos_other).0
                                             - previous_cache.pos.unwrap_or(Pos(wpos)).0,
                                     ) * Mat4::from(
                                         previous_cache_other.ori,
-                                    ) * Mat4::<f32>::translation_3d(
+                                    ) * Mat4::<f64>::translation_3d(
                                         voxel_collider.translation,
                                     );
                                     let transform_last_to = transform_last_from.inverted();
 
                                     let transform_from =
-                                        Mat4::<f32>::translation_3d(pos_other.0 - wpos)
+                                        Mat4::<f64>::translation_3d(pos_other.0 - wpos)
                                             * Mat4::from(ori_other.to_quat())
-                                            * Mat4::<f32>::translation_3d(
+                                            * Mat4::<f64>::translation_3d(
                                                 voxel_collider.translation,
                                             );
                                     let transform_to = transform_from.inverted();
@@ -1117,17 +1117,17 @@ impl<'a> PhysicsData<'a> {
 
                                     // The velocity of the collider, taking into account
                                     // orientation.
-                                    let pos_rel = (Mat4::<f32>::translation_3d(Vec3::zero())
+                                    let pos_rel = (Mat4::<f64>::translation_3d(Vec3::zero())
                                         * Mat4::from(ori_other.to_quat())
-                                        * Mat4::<f32>::translation_3d(voxel_collider.translation))
+                                        * Mat4::<f64>::translation_3d(voxel_collider.translation))
                                     .inverted()
                                     .mul_point(wpos - pos_other.0);
-                                    let rpos_last = (Mat4::<f32>::translation_3d(Vec3::zero())
+                                    let rpos_last = (Mat4::<f64>::translation_3d(Vec3::zero())
                                         * Mat4::from(previous_cache_other.ori)
-                                        * Mat4::<f32>::translation_3d(voxel_collider.translation))
+                                        * Mat4::<f64>::translation_3d(voxel_collider.translation))
                                     .mul_point(pos_rel);
                                     let vel_other = vel_other.0
-                                        + (wpos - (pos_other.0 + rpos_last)) / read.dt.0;
+                                        + (wpos - (pos_other.0 + rpos_last)) / read.dt.0 as f64;
 
                                     cpos.0 = transform_last_to.mul_point(Vec3::zero());
                                     vel.0 = ori_last_to.mul_direction(vel.0 - vel_other);
@@ -1334,14 +1334,14 @@ impl<'a> System<'a> for Sys {
 
 #[allow(clippy::too_many_lines)]
 fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
-    cylinder: (f32, f32, f32), // effective collision cylinder
+    cylinder: (f64, f64, f64), // effective collision cylinder
     terrain: &'a T,
     entity: Entity,
     pos: &mut Pos,
-    tgt_pos: Vec3<f32>,
+    tgt_pos: Vec3<f64>,
     vel: &mut Vel,
     physics_state: &mut PhysicsState,
-    ground_vel: Vec3<f32>,
+    ground_vel: Vec3<f64>,
     dt: &DeltaTime,
     was_on_ground: bool,
     block_snap: bool,
@@ -1359,7 +1359,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
     //prof_span!("box_voxel_collision");
 
     // Convience function to compute the player aabb
-    fn player_aabb(pos: Vec3<f32>, radius: f32, z_range: Range<f32>) -> Aabb<f32> {
+    fn player_aabb(pos: Vec3<f64>, radius: f64, z_range: Range<f64>) -> Aabb<f64> {
         Aabb {
             min: pos + Vec3::new(-radius, -radius, z_range.start),
             max: pos + Vec3::new(radius, radius, z_range.end),
@@ -1367,7 +1367,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
     }
 
     // Convience function to translate the near_aabb into the world space
-    fn move_aabb(aabb: Aabb<i32>, pos: Vec3<f32>) -> Aabb<i32> {
+    fn move_aabb(aabb: Aabb<i32>, pos: Vec3<f64>) -> Aabb<i32> {
         Aabb {
             min: aabb.min + pos.map(|e| e.floor() as i32),
             max: aabb.max + pos.map(|e| e.floor() as i32),
@@ -1377,12 +1377,12 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
     // Function for determining whether the player at a specific position collides
     // with blocks with the given criteria
     fn collision_with<T: BaseVol<Vox = Block> + ReadVol>(
-        pos: Vec3<f32>,
+        pos: Vec3<f64>,
         terrain: &T,
         hit: impl Fn(&Block) -> bool,
         near_aabb: Aabb<i32>,
-        radius: f32,
-        z_range: Range<f32>,
+        radius: f64,
+        z_range: Range<f64>,
     ) -> bool {
         let player_aabb = player_aabb(pos, radius, z_range);
 
@@ -1394,8 +1394,8 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
         terrain.for_each_in(near_aabb, |block_pos, block| {
             if block.is_solid() && hit(&block) {
                 let block_aabb = Aabb {
-                    min: block_pos.map(|e| e as f32),
-                    max: block_pos.map(|e| e as f32) + Vec3::new(1.0, 1.0, block.solid_height()),
+                    min: block_pos.map(|e| e as f64),
+                    max: block_pos.map(|e| e as f64) + Vec3::new(1.0, 1.0, block.solid_height()),
                 };
                 if player_aabb.collides_with_aabb(block_aabb) {
                     collision = true;
@@ -1446,7 +1446,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
     for _ in 0..increments {
         //prof_span!("increment");
         const MAX_ATTEMPTS: usize = 16;
-        pos.0 += pos_delta / increments as f32;
+        pos.0 += pos_delta / increments as f64;
 
         let try_colliding_block = |pos: &Pos| {
             //prof_span!("most colliding check");
@@ -1459,10 +1459,10 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
             let mut most_colliding = None;
             // Calculate the world space near aabb
             let near_aabb = move_aabb(near_aabb, pos.0);
-            let player_overlap = |block_aabb: Aabb<f32>| {
+            let player_overlap = |block_aabb: Aabb<f64>| {
                 ordered_float::OrderedFloat(
                     (block_aabb.center() - player_aabb.center() - Vec3::unit_z() * 0.5)
-                        .map(f32::abs)
+                        .map(f64::abs)
                         .sum(),
                 )
             };
@@ -1472,8 +1472,8 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
                 if block.is_solid() {
                     // Calculate block AABB
                     let block_aabb = Aabb {
-                        min: block_pos.map(|e| e as f32),
-                        max: block_pos.map(|e| e as f32)
+                        min: block_pos.map(|e| e as f64),
+                        max: block_pos.map(|e| e as f64)
                             + Vec3::new(1.0, 1.0, block.solid_height()),
                     };
 
@@ -1571,7 +1571,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
                 vel.0.z = vel.0.z.max(0.0);
                 // Push the character on to the block very slightly
                 // to avoid jitter due to imprecision
-                if (vel.0 * resolve_dir).xy().magnitude_squared() < 1.0_f32.powi(2) {
+                if (vel.0 * resolve_dir).xy().magnitude_squared() < 1.0_f64.powi(2) {
                     pos.0 -= resolve_dir.normalized() * 0.05;
                 }
                 on_ground = Some(block);
@@ -1655,16 +1655,16 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
         }
     });
 
-    let mut liquid = None::<(LiquidKind, f32)>;
+    let mut liquid = None::<(LiquidKind, f64)>;
     let mut wall_dir_collisions = [false; 4];
     //prof_span!(guard, "liquid/walls");
     terrain.for_each_in(near_aabb, |block_pos, block| {
         // Check for liquid blocks
         if let Some(block_liquid) = block.liquid_kind() {
             let liquid_aabb = Aabb {
-                min: block_pos.map(|e| e as f32),
+                min: block_pos.map(|e| e as f64),
                 // The liquid part of a liquid block always extends 1 block high.
-                max: block_pos.map(|e| e as f32) + Vec3::one(),
+                max: block_pos.map(|e| e as f64) + Vec3::one(),
             };
             if player_aabb.collides_with_aabb(liquid_aabb) {
                 liquid = match liquid {
@@ -1683,8 +1683,8 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
         // Check for walls
         if block.is_solid() {
             let block_aabb = Aabb {
-                min: block_pos.map(|e| e as f32),
-                max: block_pos.map(|e| e as f32) + Vec3::new(1.0, 1.0, block.solid_height()),
+                min: block_pos.map(|e| e as f64),
+                max: block_pos.map(|e| e as f64) + Vec3::new(1.0, 1.0, block.solid_height()),
             };
 
             for dir in 0..4 {
@@ -1708,7 +1708,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
     }
 
     physics_state.on_wall = on_wall;
-    let fric_mod = read.stats.get(entity).map_or(1.0, |s| s.friction_modifier);
+    let fric_mod = read.stats.get(entity).map_or(1.0, |s| s.friction_modifier as f64);
 
     // skating (ski)
     if !vel.0.xy().is_approx_zero()
@@ -1716,15 +1716,15 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
             .on_ground
             .map_or(false, |g| physics_state.footwear.can_skate_on(g.kind()))
     {
-        const DT_SCALE: f32 = 1.0; // other areas use 60.0???
-        const POTENTIAL_TO_KINETIC: f32 = 8.0; // * 2.0 * GRAVITY;
+        const DT_SCALE: f64 = 1.0; // other areas use 60.0???
+        const POTENTIAL_TO_KINETIC: f64 = 8.0; // * 2.0 * GRAVITY;
 
         let kind = physics_state.on_ground.map_or(BlockKind::Air, |g| g.kind());
         let (longitudinal_friction, lateral_friction) = physics_state.footwear.get_friction(kind);
         // the amount of longitudinal speed preserved
         let longitudinal_friction_factor_squared =
-            (1.0 - longitudinal_friction).powf(dt.0 * DT_SCALE * 2.0);
-        let lateral_friction_factor = (1.0 - lateral_friction).powf(dt.0 * DT_SCALE);
+            (1.0 - longitudinal_friction).powf(dt.0 as f64 * DT_SCALE * 2.0);
+        let lateral_friction_factor = (1.0 - lateral_friction).powf(dt.0 as f64 * DT_SCALE);
         let groundplane_velocity = vel.0.xy();
         let mut longitudinal_dir = ori.look_vec().xy();
         if longitudinal_dir.is_approx_zero() {
@@ -1737,7 +1737,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
         // if we crossed an edge up or down accelerate in travelling direction,
         // as potential energy is converted into kinetic energy we compare it with the
         // square of velocity
-        let vertical_difference = physics_state.skating_last_height - pos.0.z;
+        let vertical_difference = physics_state.skating_last_height as f64 - pos.0.z;
         // might become negative when skating slowly uphill
         let height_factor_squared = if vertical_difference != 0.0 {
             // E=½mv², we scale both energies by ½m
@@ -1784,7 +1784,7 @@ fn box_voxel_collision<'a, T: BaseVol<Vox = Block> + ReadVol>(
         };
         let fric = ground_fric.max(wall_fric);
         if fric > 0.0 {
-            vel.0 *= (1.0 - fric.min(1.0) * fric_mod).powf(dt.0 * 60.0);
+            vel.0 *= (1.0 - fric.min(1.0) * fric_mod).powf(dt.0 as f64 * 60.0);
             physics_state.ground_vel = ground_vel;
         }
         physics_state.skating_active = false;
@@ -1821,11 +1821,11 @@ fn voxel_collider_bounding_sphere(
     voxel_collider: &VoxelCollider,
     pos: &Pos,
     ori: &Ori,
-) -> Sphere<f32, f32> {
+) -> Sphere<f64, f64> {
     let origin_offset = voxel_collider.translation;
     use common::vol::SizedVol;
-    let lower_bound = voxel_collider.volume().lower_bound().map(|e| e as f32);
-    let upper_bound = voxel_collider.volume().upper_bound().map(|e| e as f32);
+    let lower_bound = voxel_collider.volume().lower_bound().map(|e| e as f64);
+    let upper_bound = voxel_collider.volume().upper_bound().map(|e| e as f64);
     let center = (lower_bound + upper_bound) / 2.0;
     // Compute vector from the origin (where pos value corresponds to) and the model
     // center
@@ -1836,7 +1836,7 @@ fn voxel_collider_bounding_sphere(
     let wpos_center = oriented_center_offset + pos.0;
 
     // Note: to not get too fine grained we use a 2D grid for now
-    const SPRITE_AND_MAYBE_OTHER_THINGS: f32 = 4.0;
+    const SPRITE_AND_MAYBE_OTHER_THINGS: f64 = 4.0;
     let radius = ((upper_bound - lower_bound) / 2.0
         + Vec3::broadcast(SPRITE_AND_MAYBE_OTHER_THINGS))
     .magnitude();
@@ -1850,7 +1850,7 @@ fn voxel_collider_bounding_sphere(
 struct ColliderData<'a> {
     pos: &'a Pos,
     previous_cache: &'a PreviousPhysCache,
-    z_limits: (f32, f32),
+    z_limits: (f64, f64),
     collider: &'a Collider,
     mass: Mass,
 }
@@ -1861,11 +1861,11 @@ fn resolve_e2e_collision(
     // utility variables for our entity
     collision_registered: &mut bool,
     entity_entity_collisions: &mut u64,
-    factor: f32,
+    factor: f64,
     physics: &mut PhysicsState,
     char_state_maybe: Option<&CharacterState>,
-    vel_delta: &mut Vec3<f32>,
-    step_delta: f32,
+    vel_delta: &mut Vec3<f64>,
+    step_delta: f64,
     // physics flags
     is_mid_air: bool,
     is_sticky: bool,
@@ -1952,7 +1952,7 @@ fn resolve_e2e_collision(
         && !other_data.collider.is_voxel()
         && !our_data.collider.is_voxel()
     {
-        const ELASTIC_FORCE_COEFFICIENT: f32 = 400.0;
+        const ELASTIC_FORCE_COEFFICIENT: f64 = 400.0;
         let mass_coefficient = other_data.mass.0 / (our_data.mass.0 + other_data.mass.0);
         let distance_coefficient = collision_dist - diff.magnitude();
         let force = ELASTIC_FORCE_COEFFICIENT * distance_coefficient * mass_coefficient;
@@ -1975,14 +1975,14 @@ fn resolve_e2e_collision(
 }
 
 struct ColliderContext<'a> {
-    pos: Vec3<f32>,
+    pos: Vec3<f64>,
     previous_cache: &'a PreviousPhysCache,
 }
 
 /// Find pushback vector and collision_distance we assume between this
 /// colliders.
-fn projection_between(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f32>, f32) {
-    const DIFF_THRESHOLD: f32 = f32::EPSILON;
+fn projection_between(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f64>, f64) {
+    const DIFF_THRESHOLD: f64 = f64::EPSILON;
     let our_radius = c0.previous_cache.neighborhood_radius;
     let their_radius = c1.previous_cache.neighborhood_radius;
     let collision_dist = our_radius + their_radius;
@@ -2023,7 +2023,7 @@ fn projection_between(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f32>, f
 /// Returns the points on line segments n and m respectively that are the
 /// closest to one-another. If the lines are parallel, an arbitrary,
 /// unspecified pair of points that sit on the line segments will be chosen.
-fn closest_points(n: LineSegment2<f32>, m: LineSegment2<f32>) -> (Vec2<f32>, Vec2<f32>) {
+fn closest_points(n: LineSegment2<f64>, m: LineSegment2<f64>) -> (Vec2<f64>, Vec2<f64>) {
     // TODO: Rewrite this to something reasonable, if you have faith
     let a = n.start;
     let b = n.end - n.start;
@@ -2076,7 +2076,7 @@ fn closest_points(n: LineSegment2<f32>, m: LineSegment2<f32>) -> (Vec2<f32>, Vec
 
 /// Find pushback vector and collision_distance we assume between this
 /// colliders assuming that only one of them is capsule prism.
-fn capsule2cylinder(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f32>, f32) {
+fn capsule2cylinder(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f64>, f64) {
     // "Proper" way to do this would be handle the case when both our colliders
     // are capsule prisms by building origins from p0, p1 offsets and our
     // positions and find some sort of projection between line segments of
@@ -2100,13 +2100,13 @@ fn capsule2cylinder(c0: ColliderContext, c1: ColliderContext) -> (Vec2<f32>, f32
     //
     let we = c0.pos.xy();
     let other = c1.pos.xy();
-    let calculate_projection_and_collision_dist = |our_radius: f32,
-                                                   their_radius: f32,
-                                                   origins: Option<(Vec2<f32>, Vec2<f32>)>,
-                                                   start_point: Vec2<f32>,
-                                                   end_point: Vec2<f32>,
-                                                   coefficient: f32|
-     -> (Vec2<f32>, f32) {
+    let calculate_projection_and_collision_dist = |our_radius: f64,
+                                                   their_radius: f64,
+                                                   origins: Option<(Vec2<f64>, Vec2<f64>)>,
+                                                   start_point: Vec2<f64>,
+                                                   end_point: Vec2<f64>,
+                                                   coefficient: f64|
+     -> (Vec2<f64>, f64) {
         let collision_dist = our_radius + their_radius;
 
         let (p0_offset, p1_offset) = match origins {

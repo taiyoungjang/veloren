@@ -299,7 +299,7 @@ pub fn handle_inbox_talk(bdata: &mut BehaviorData) -> bool {
                         },
                         Subject::Location(location) => {
                             if let Some(tgt_pos) = read_data.positions.get(target) {
-                                let raw_dir = location.origin.as_::<f32>() - tgt_pos.0.xy();
+                                let raw_dir = location.origin.as_::<f64>() - tgt_pos.0.xy();
                                 let dist = Distance::from_dir(raw_dir).name();
                                 let dir = Direction::from_dir(raw_dir).name();
 

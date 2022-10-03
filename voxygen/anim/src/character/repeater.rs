@@ -38,7 +38,7 @@ impl Animation for RepeaterAnimation {
         let mut next = (*skeleton).clone();
         let speed = Vec2::<f32>::from(velocity).magnitude();
         let ori_angle = orientation.y.atan2(orientation.x);
-        let lookdir_angle = look_dir.y.atan2(look_dir.x);
+        let lookdir_angle = look_dir.y.atan2(look_dir.x) as f32;
         let swivel = lookdir_angle - ori_angle;
         let (move1base, move2base, move3base, move4) = match stage_section {
             Some(StageSection::Movement) => (anim_time, 0.0, 0.0, 0.0),

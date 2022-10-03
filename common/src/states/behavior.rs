@@ -61,7 +61,7 @@ pub trait CharacterBehavior {
         data: &JoinData,
         input: InputKind,
         target_entity: Option<Uid>,
-        select_pos: Option<Vec3<f32>>,
+        select_pos: Option<Vec3<f64>>,
     ) -> StateUpdate {
         let mut update = StateUpdate::from(data);
         update.queued_inputs.insert(input, InputAttr {

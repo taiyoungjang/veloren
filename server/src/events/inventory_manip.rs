@@ -316,7 +316,7 @@ pub fn handle_inventory(server: &mut Server, entity: EcsEntity, manip: comp::Inv
                 state
                     .create_item_drop(Default::default(), item)
                     .with(comp::Pos(
-                        Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32) + Vec3::unit_z(),
+                        Vec3::new(pos.x as f64, pos.y as f64, pos.z as f64) + Vec3::unit_z(),
                     ))
                     .with(comp::Vel(Vec3::zero()))
                     .build();
@@ -416,7 +416,7 @@ pub fn handle_inventory(server: &mut Server, entity: EcsEntity, manip: comp::Inv
                                         )
                                             .join()
                                             .filter(|(_, _, wild_pos, _)| {
-                                                wild_pos.0.distance_squared(pos.0) < 5.0f32.powi(2)
+                                                wild_pos.0.distance_squared(pos.0) < 5.0f64.powi(2)
                                             })
                                             .filter(|(_, body, _, alignment)| {
                                                 alignment == &&Alignment::Wild && is_tameable(body)

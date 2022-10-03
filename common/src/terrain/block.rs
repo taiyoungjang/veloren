@@ -345,7 +345,7 @@ impl Block {
     pub fn is_opaque(&self) -> bool { self.kind().is_filled() }
 
     #[inline]
-    pub fn solid_height(&self) -> f32 {
+    pub fn solid_height(&self) -> f64 {
         self.get_sprite()
             .map(|s| s.solid_height().unwrap_or(0.0))
             .unwrap_or(1.0)
@@ -354,7 +354,7 @@ impl Block {
     /// Get the friction constant used to calculate surface friction when
     /// walking/climbing. Currently has no units.
     #[inline]
-    pub fn get_friction(&self) -> f32 {
+    pub fn get_friction(&self) -> f64 {
         match self.kind() {
             BlockKind::Ice => FRIC_GROUND * 0.1,
             _ => FRIC_GROUND,
@@ -367,7 +367,7 @@ impl Block {
     /// 1.0 = default, 0.0 = completely inhibits movement, > 1.0 = potential for
     /// infinite acceleration (in a vacuum).
     #[inline]
-    pub fn get_traction(&self) -> f32 {
+    pub fn get_traction(&self) -> f64 {
         match self.kind() {
             BlockKind::Snow => 0.8,
             _ => 1.0,

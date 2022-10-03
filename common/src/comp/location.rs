@@ -5,22 +5,22 @@ use vek::*;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Waypoint {
-    pos: Vec3<f32>,
+    pos: Vec3<f64>,
     last_save: Time,
 }
 
 impl Waypoint {
     // TODO: add actual fix and remove this method
-    pub fn temp_new(pos: Vec3<f32>, last_save: Time) -> Self {
+    pub fn temp_new(pos: Vec3<f64>, last_save: Time) -> Self {
         Self {
-            pos: pos + Vec3::from(0.25f32).map(|e| e * rand::random::<f32>() - 0.25 / 2.0),
+            pos: pos + Vec3::from(0.25f64).map(|e| e * rand::random::<f64>() - 0.25 / 2.0),
             last_save,
         }
     }
 
-    pub fn new(pos: Vec3<f32>, last_save: Time) -> Self { Self { pos, last_save } }
+    pub fn new(pos: Vec3<f64>, last_save: Time) -> Self { Self { pos, last_save } }
 
-    pub fn get_pos(&self) -> Vec3<f32> { self.pos }
+    pub fn get_pos(&self) -> Vec3<f64> { self.pos }
 
     /// Time in seconds since this waypoint was saved
     pub fn elapsed(&self, time: Time) -> f64 { time.0 - self.last_save.0 }
@@ -31,10 +31,10 @@ impl Component for Waypoint {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct WaypointArea(f32);
+pub struct WaypointArea(f64);
 
 impl WaypointArea {
-    pub fn radius(&self) -> f32 { self.0 }
+    pub fn radius(&self) -> f64 { self.0 }
 }
 
 impl Component for WaypointArea {

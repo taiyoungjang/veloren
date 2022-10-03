@@ -446,7 +446,7 @@ pub enum CharacterAbility {
         movement_duration: f32,
         only_up: bool,
         speed: f32,
-        max_exit_velocity: f32,
+        max_exit_velocity: f64,
     },
     DashMelee {
         energy_cost: f32,
@@ -527,8 +527,8 @@ pub enum CharacterAbility {
         scaled_regen: f32,
         initial_damage: f32,
         scaled_damage: f32,
-        initial_knockback: f32,
-        scaled_knockback: f32,
+        initial_knockback: f64,
+        scaled_knockback: f64,
         buildup_duration: f32,
         charge_duration: f32,
         recover_duration: f32,
@@ -748,8 +748,8 @@ impl CharacterAbility {
             } => {
                 *buildup_duration /= stats.speed;
                 *recover_duration /= stats.speed;
-                *projectile = projectile.modified_projectile(stats.power, 1_f32, 1_f32);
-                *projectile_speed *= stats.range;
+                *projectile = projectile.modified_projectile(stats.power, 1_f32, 1_f64);
+                *projectile_speed *= stats.range as f32;
                 *energy_cost /= stats.energy_efficiency;
             },
             RepeaterRanged {
@@ -767,8 +767,8 @@ impl CharacterAbility {
                 *buildup_duration /= stats.speed;
                 *shoot_duration /= stats.speed;
                 *recover_duration /= stats.speed;
-                *projectile = projectile.modified_projectile(stats.power, 1_f32, 1_f32);
-                *projectile_speed *= stats.range;
+                *projectile = projectile.modified_projectile(stats.power, 1_f32, 1_f64);
+                *projectile_speed *= stats.range as f32;
                 *energy_cost /= stats.energy_efficiency;
             },
             Boost {
@@ -943,7 +943,7 @@ impl CharacterAbility {
                 *recover_duration /= stats.speed;
                 *damage *= stats.power;
                 *poise_damage *= stats.effect_power;
-                *shockwave_duration *= stats.range;
+                *shockwave_duration *= stats.range as f32;
                 *energy_cost /= stats.energy_efficiency;
                 if let Some(CombatEffect::Buff(combat::CombatBuff {
                     kind: _,
@@ -975,7 +975,7 @@ impl CharacterAbility {
                 *tick_rate *= stats.speed;
                 *range *= stats.range;
                 // Duration modified to keep velocity constant
-                *beam_duration *= stats.range;
+                *beam_duration *= stats.range as f32;
                 *energy_drain /= stats.energy_efficiency;
                 if let Some(CombatEffect::Buff(combat::CombatBuff {
                     kind: _,
@@ -1037,8 +1037,8 @@ impl CharacterAbility {
                 *buildup_duration /= stats.speed;
                 *cast_duration /= stats.speed;
                 *recover_duration /= stats.speed;
-                *inner_dist *= stats.range;
-                *outer_dist *= stats.range;
+                *inner_dist *= stats.range as f32;
+                *outer_dist *= stats.range as f32;
             },
             SelfBuff {
                 ref mut buildup_duration,
@@ -1347,7 +1347,7 @@ impl CharacterAbility {
                         *damage *= modifiers.base_damage.powi(level.into());
                     }
                     if let Ok(level) = skillset.skill_level(Axe(LKnockback)) {
-                        *knockback *= modifiers.knockback.powi(level.into());
+                        *knockback *= modifiers.knockback.powi(level.into()) as f64;
                     }
                 }
                 if let Ok(level) = skillset.skill_level(Axe(LCost)) {
@@ -1381,7 +1381,7 @@ impl CharacterAbility {
                 if let Ok(level) = skillset.skill_level(Hammer(SsKnockback)) {
                     *stage_data = (*stage_data)
                         .iter()
-                        .map(|s| s.modify_strike(modifiers.knockback.powi(level.into())))
+                        .map(|s| s.modify_strike(modifiers.knockback.powi(level.into()) as f32))
                         .collect::<Vec<_>>();
                 }
                 let speed_segments = f32::from(Hammer(SsSpeed).max_level());
@@ -1458,7 +1458,7 @@ impl CharacterAbility {
                     *vertical_leap_strength *= strength.powi(level.into());
                 }
                 if let Ok(level) = skillset.skill_level(Hammer(LRange)) {
-                    melee_constructor.range += modifiers.range * f32::from(level);
+                    melee_constructor.range += modifiers.range * f64::from(level);
                 }
             },
             _ => {},
@@ -1526,7 +1526,7 @@ impl CharacterAbility {
                 }
                 if let Ok(level) = skillset.skill_level(Bow(RDamage)) {
                     let power = modifiers.power.powi(level.into());
-                    *projectile = projectile.modified_projectile(power, 1_f32, 1_f32);
+                    *projectile = projectile.modified_projectile(power, 1_f32, 1_f64);
                 }
                 if let Ok(level) = skillset.skill_level(Bow(RCost)) {
                     *energy_cost *= modifiers.energy_cost.powi(level.into());
@@ -1549,7 +1549,7 @@ impl CharacterAbility {
                 }
                 if let Ok(level) = skillset.skill_level(Bow(SDamage)) {
                     let power = modifiers.power.powi(level.into());
-                    *projectile = projectile.modified_projectile(power, 1_f32, 1_f32);
+                    *projectile = projectile.modified_projectile(power, 1_f32, 1_f64);
                 }
                 if let Ok(level) = skillset.skill_level(Bow(SCost)) {
                     *energy_cost *= modifiers.energy_cost.powi(level.into());
@@ -1620,7 +1620,7 @@ impl CharacterAbility {
                     *damage *= modifiers.damage.powi(level.into());
                 }
                 if let Ok(level) = skillset.skill_level(Staff(SKnockback)) {
-                    let knockback_mod = modifiers.knockback.powi(level.into());
+                    let knockback_mod = modifiers.knockback.powi(level.into()) as f64;
                     *knockback = knockback.modify_strength(knockback_mod);
                 }
                 if let Ok(level) = skillset.skill_level(Staff(SRange)) {

@@ -9,18 +9,18 @@ use vek::*;
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(into = "SerdeDir")]
 #[serde(from = "SerdeDir")]
-pub struct Dir(Vec3<f32>);
+pub struct Dir(Vec3<f64>);
 impl Default for Dir {
     fn default() -> Self { Self::forward() }
 }
 
 // Validate at Deserialization
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-struct SerdeDir(Vec3<f32>);
+struct SerdeDir(Vec3<f64>);
 impl From<SerdeDir> for Dir {
     fn from(dir: SerdeDir) -> Self {
         let dir = dir.0;
-        if dir.map(f32::is_nan).reduce_or() {
+        if dir.map(f64::is_nan).reduce_or() {
             warn!(
                 ?dir,
                 "Deserialized dir containing NaNs, replacing with default"
@@ -46,11 +46,11 @@ impl From<Dir> for SerdeDir {
     NotNormalized,
 }
 
-impl TryFrom<Vec3<f32>> for Dir {
+impl TryFrom<Vec3<f64>> for Dir {
     type Error = TryFromVec3Error;
 
     fn try_from(v: Vec3) -> Result<Self, TryFromVec3Error> {
-        if v.map(f32::is_nan).reduce_or() {
+        if v.map(f64::is_nan).reduce_or() {
             Err(TryFromVec3Error::ContainsNans)
         } else {
             v.try_normalized()
@@ -61,17 +61,17 @@ impl TryFrom<Vec3<f32>> for Dir {
 }*/
 
 impl Dir {
-    pub fn new(dir: Vec3<f32>) -> Self {
-        debug_assert!(!dir.map(f32::is_nan).reduce_or());
+    pub fn new(dir: Vec3<f64>) -> Self {
+        debug_assert!(!dir.map(f64::is_nan).reduce_or());
         debug_assert!(dir.is_normalized());
         Self(dir)
     }
 
-    pub fn from_unnormalized(dirs: Vec3<f32>) -> Option<Self> {
+    pub fn from_unnormalized(dirs: Vec3<f64>) -> Option<Self> {
         dirs.try_normalized().map(|dir| {
             #[cfg(debug_assertions)]
             {
-                if dir.map(f32::is_nan).reduce_or() {
+                if dir.map(f64::is_nan).reduce_or() {
                     panic!("{} => {}", dirs, dir);
                 }
             }
@@ -79,54 +79,54 @@ impl Dir {
         })
     }
 
-    pub fn slerp(from: Self, to: Self, factor: f32) -> Self {
+    pub fn slerp(from: Self, to: Self, factor: f64) -> Self {
         Self(slerp_normalized(from.0, to.0, factor))
     }
 
     #[must_use]
-    pub fn slerped_to(self, to: Self, factor: f32) -> Self {
+    pub fn slerped_to(self, to: Self, factor: f64) -> Self {
         Self(slerp_normalized(self.0, to.0, factor))
     }
 
     /// Note: this uses `from` if `to` is unnormalizable
-    pub fn slerp_to_vec3(from: Self, to: Vec3<f32>, factor: f32) -> Self {
+    pub fn slerp_to_vec3(from: Self, to: Vec3<f64>, factor: f64) -> Self {
         Self(slerp_to_unnormalized(from.0, to, factor).unwrap_or_else(|e| e))
     }
 
-    pub fn rotation_between(&self, to: Self) -> Quaternion<f32> {
-        Quaternion::<f32>::rotation_from_to_3d(self.0, to.0)
+    pub fn rotation_between(&self, to: Self) -> Quaternion<f64> {
+        Quaternion::<f64>::rotation_from_to_3d(self.0, to.0)
     }
 
-    pub fn rotation(&self) -> Quaternion<f32> { Self::default().rotation_between(*self) }
+    pub fn rotation(&self) -> Quaternion<f64> { Self::default().rotation_between(*self) }
 
-    pub fn is_valid(&self) -> bool { !self.0.map(f32::is_nan).reduce_or() && self.is_normalized() }
+    pub fn is_valid(&self) -> bool { !self.0.map(f64::is_nan).reduce_or() && self.is_normalized() }
 
-    pub fn up() -> Self { Dir::new(Vec3::<f32>::unit_z()) }
+    pub fn up() -> Self { Dir::new(Vec3::<f64>::unit_z()) }
 
-    pub fn down() -> Self { -Dir::new(Vec3::<f32>::unit_z()) }
+    pub fn down() -> Self { -Dir::new(Vec3::<f64>::unit_z()) }
 
-    pub fn left() -> Self { -Dir::new(Vec3::<f32>::unit_x()) }
+    pub fn left() -> Self { -Dir::new(Vec3::<f64>::unit_x()) }
 
-    pub fn right() -> Self { Dir::new(Vec3::<f32>::unit_x()) }
+    pub fn right() -> Self { Dir::new(Vec3::<f64>::unit_x()) }
 
-    pub fn forward() -> Self { Dir::new(Vec3::<f32>::unit_y()) }
+    pub fn forward() -> Self { Dir::new(Vec3::<f64>::unit_y()) }
 
-    pub fn back() -> Self { -Dir::new(Vec3::<f32>::unit_y()) }
+    pub fn back() -> Self { -Dir::new(Vec3::<f64>::unit_y()) }
 
     pub fn to_horizontal(self) -> Option<Self> { Self::from_unnormalized(self.xy().into()) }
 
-    pub fn vec(&self) -> &Vec3<f32> { &self.0 }
+    pub fn vec(&self) -> &Vec3<f64> { &self.0 }
 
-    pub fn to_vec(self) -> Vec3<f32> { self.0 }
+    pub fn to_vec(self) -> Vec3<f64> { self.0 }
 }
 
 impl std::ops::Deref for Dir {
-    type Target = Vec3<f32>;
+    type Target = Vec3<f64>;
 
-    fn deref(&self) -> &Vec3<f32> { &self.0 }
+    fn deref(&self) -> &Vec3<f64> { &self.0 }
 }
 
-impl From<Dir> for Vec3<f32> {
+impl From<Dir> for Vec3<f64> {
     fn from(dir: Dir) -> Self { *dir }
 }
 
@@ -138,8 +138,8 @@ impl Projection<Plane> for Dir {
     }
 }
 
-impl Projection<Dir> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Projection<Dir> for Vec3<f64> {
+    type Output = Vec3<f64>;
 
     fn projected(self, dir: &Dir) -> Self::Output {
         let dir = **dir;
@@ -147,7 +147,7 @@ impl Projection<Dir> for Vec3<f32> {
     }
 }
 
-impl std::ops::Mul<Dir> for Quaternion<f32> {
+impl std::ops::Mul<Dir> for Quaternion<f64> {
     type Output = Dir;
 
     fn mul(self, dir: Dir) -> Self::Output { Dir((self * *dir).normalized()) }
@@ -165,9 +165,9 @@ impl std::ops::Neg for Dir {
 /// Additionally, it avoids unnecessary calculations if they are near identical
 /// Assumes `from` and `to` are normalized and returns a normalized vector
 #[inline(always)]
-fn slerp_normalized(from: Vec3<f32>, to: Vec3<f32>, factor: f32) -> Vec3<f32> {
-    debug_assert!(!to.map(f32::is_nan).reduce_or());
-    debug_assert!(!from.map(f32::is_nan).reduce_or());
+fn slerp_normalized(from: Vec3<f64>, to: Vec3<f64>, factor: f64) -> Vec3<f64> {
+    debug_assert!(!to.map(f64::is_nan).reduce_or());
+    debug_assert!(!from.map(f64::is_nan).reduce_or());
     // Ensure from is normalized
     #[cfg(debug_assertions)]
     {
@@ -228,7 +228,7 @@ fn slerp_normalized(from: Vec3<f32>, to: Vec3<f32>, factor: f32) -> Vec3<f32> {
     // something was missed
     #[cfg(debug_assertions)]
     {
-        if !slerped_normalized.is_normalized() || slerped_normalized.map(f32::is_nan).reduce_or() {
+        if !slerped_normalized.is_normalized() || slerped_normalized.map(f64::is_nan).reduce_or() {
             panic!(
                 "Failed to normalize {:?} produced from:\nslerp(\n    {:?},\n    {:?},\n    \
                  {:?},\n)\nWith result: {:?})",
@@ -250,10 +250,10 @@ fn slerp_normalized(from: Vec3<f32>, to: Vec3<f32>, factor: f32) -> Vec3<f32> {
 // TODO: in some cases we might want to base the slerp rate on the magnitude of
 // `to` for example when `to` is velocity and `from` is orientation
 fn slerp_to_unnormalized(
-    from: Vec3<f32>,
-    to: Vec3<f32>,
-    factor: f32,
-) -> Result<Vec3<f32>, Vec3<f32>> {
+    from: Vec3<f64>,
+    to: Vec3<f64>,
+    factor: f64,
+) -> Result<Vec3<f64>, Vec3<f64>> {
     to.try_normalized()
         .map(|to| slerp_normalized(from, to, factor))
         .ok_or(from)

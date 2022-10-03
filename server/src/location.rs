@@ -32,11 +32,11 @@ impl<'a> fmt::Display for LocationError<'a> {
 /// players. They currently do not persist between server sessions.
 #[derive(Default)]
 pub struct Locations {
-    locations: HashMap<String, Vec3<f32>>,
+    locations: HashMap<String, Vec3<f64>>,
 }
 
 impl Locations {
-    pub fn insert(&mut self, name: String, pos: Vec3<f32>) -> Result<(), LocationError<'static>> {
+    pub fn insert(&mut self, name: String, pos: Vec3<f64>) -> Result<(), LocationError<'static>> {
         if name.chars().all(|c| c.is_ascii_lowercase() || c == '_') {
             self.locations
                 .try_insert(name, pos)
@@ -47,7 +47,7 @@ impl Locations {
         }
     }
 
-    pub fn get<'a>(&self, name: &'a str) -> Result<Vec3<f32>, LocationError<'a>> {
+    pub fn get<'a>(&self, name: &'a str) -> Result<Vec3<f64>, LocationError<'a>> {
         self.locations
             .get(name)
             .copied()

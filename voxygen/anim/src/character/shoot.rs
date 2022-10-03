@@ -65,7 +65,7 @@ impl Animation for ShootAnimation {
             0.0
         } * 1.3;
         let ori_angle = orientation.y.atan2(orientation.x);
-        let lookdir_angle = look_dir.y.atan2(look_dir.x);
+        let lookdir_angle = look_dir.y.atan2(look_dir.x) as f32;
         let swivel = lookdir_angle - ori_angle;
         match ability_info.and_then(|a| a.tool) {
             Some(ToolKind::Staff) | Some(ToolKind::Sceptre) => {
@@ -90,17 +90,17 @@ impl Animation for ShootAnimation {
                 next.control.position = Vec3::new(
                     s_a.stc.0 + (xmove * 3.0 + move1 * -4.0) * (1.0 - move3),
                     s_a.stc.1 + (2.0 + ymove * 3.0 + move2 * 3.0) * (1.0 - move3),
-                    s_a.stc.2 + look_dir.z * 4.0,
+                    s_a.stc.2 + look_dir.z as f32 * 4.0,
                 );
                 next.control.orientation =
-                    Quaternion::rotation_x(look_dir.z + s_a.stc.3 + (move2 * 0.6) * (1.0 - move3))
+                    Quaternion::rotation_x(look_dir.z as f32 + s_a.stc.3 + (move2 * 0.6) * (1.0 - move3))
                         * Quaternion::rotation_y(s_a.stc.4 + (move1 * 0.5 + move2 * -0.5))
                         * Quaternion::rotation_z(
                             s_a.stc.5 - (0.2 + move1 * -0.5 + move2 * 0.8) * (1.0 - move3),
                         );
 
                 next.head.position = Vec3::new(0.0, s_a.head.0, s_a.head.1);
-                next.head.orientation = Quaternion::rotation_x(look_dir.z * 0.7)
+                next.head.orientation = Quaternion::rotation_x(look_dir.z as f32 * 0.7)
                     * Quaternion::rotation_z(
                         tilt * -2.5 + (move1 * -0.2 + move2 * -0.4) * (1.0 - move3),
                     );
@@ -132,17 +132,17 @@ impl Animation for ShootAnimation {
 
                 next.control.position = Vec3::new(
                     s_a.bc.0 + 11.0 + move2 * 2.0,
-                    s_a.bc.1 + 2.0 + (look_dir.z * -5.0).min(-2.0) + move2 * -1.0,
-                    s_a.bc.2 + 8.0 + (look_dir.z * 15.0).max(-8.0),
+                    s_a.bc.1 + 2.0 + (look_dir.z as f32 * -5.0).min(-2.0) + move2 * -1.0,
+                    s_a.bc.2 + 8.0 + (look_dir.z as f32 * 15.0).max(-8.0),
                 );
-                next.control.orientation = Quaternion::rotation_x(look_dir.z)
-                    * Quaternion::rotation_y(-look_dir.z + s_a.bc.4 - 1.25)
+                next.control.orientation = Quaternion::rotation_x(look_dir.z as f32)
+                    * Quaternion::rotation_y(-look_dir.z as f32 + s_a.bc.4 - 1.25)
                     * Quaternion::rotation_z(s_a.bc.5 - 0.2 + move2 * -0.1);
 
                 next.head.position = Vec3::new(0.0, s_a.head.0, s_a.head.1);
 
                 next.head.orientation =
-                    Quaternion::rotation_x(look_dir.z * 0.7) * Quaternion::rotation_z(tilt * -0.0);
+                    Quaternion::rotation_x(look_dir.z as f32 * 0.7) * Quaternion::rotation_z(tilt * -0.0);
                 next.chest.orientation = Quaternion::rotation_z(swivel * 0.8 + 0.8 + move2 * 0.5);
                 next.torso.orientation = Quaternion::rotation_z(swivel * 0.2);
 

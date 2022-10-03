@@ -31,7 +31,7 @@ use vek::*;
 pub const MOVEMENT_THRESHOLD_VEL: f32 = 3.0;
 
 impl Body {
-    pub fn base_accel(&self) -> f32 {
+    pub fn base_accel(&self) -> f64 {
         match self {
             Body::Humanoid(_) => 100.0,
             Body::QuadrupedSmall(body) => match body.species {
@@ -151,11 +151,11 @@ impl Body {
         }
     }
 
-    pub fn air_accel(&self) -> f32 { self.base_accel() * 0.025 }
+    pub fn air_accel(&self) -> f64 { self.base_accel() * 0.025 }
 
     /// Attempt to determine the maximum speed of the character
     /// when moving on the ground
-    pub fn max_speed_approx(&self) -> f32 {
+    pub fn max_speed_approx(&self) -> f64 {
         // Inverse kinematics: at what velocity will acceleration
         // be cancelled out by friction drag?
         // Note: we assume no air, since it's such a small factor.
@@ -172,7 +172,7 @@ impl Body {
     }
 
     /// The turn rate in 180°/s (or (rotations per second)/2)
-    pub fn base_ori_rate(&self) -> f32 {
+    pub fn base_ori_rate(&self) -> f64 {
         match self {
             Body::Humanoid(_) => 3.5,
             Body::QuadrupedSmall(_) => 3.0,
@@ -213,7 +213,7 @@ impl Body {
     }
 
     /// Returns thrust force if the body type can swim, otherwise None
-    pub fn swim_thrust(&self) -> Option<f32> {
+    pub fn swim_thrust(&self) -> Option<f64> {
         match self {
             Body::Object(_) => None,
             Body::ItemDrop(_) => None,
@@ -244,7 +244,7 @@ impl Body {
     }
 
     /// Returns thrust force if the body type can fly, otherwise None
-    pub fn fly_thrust(&self) -> Option<f32> {
+    pub fn fly_thrust(&self) -> Option<f64> {
         match self {
             Body::BirdMedium(_) => Some(GRAVITY * self.mass().0 * 2.0),
             Body::BirdLarge(_) => Some(GRAVITY * self.mass().0 * 0.5),
@@ -255,7 +255,7 @@ impl Body {
     }
 
     /// Returns jump impulse if the body type can jump, otherwise None
-    pub fn jump_impulse(&self) -> Option<f32> {
+    pub fn jump_impulse(&self) -> Option<f64> {
         match self {
             Body::Object(_) | Body::Ship(_) | Body::ItemDrop(_) => None,
             Body::BipedLarge(_) | Body::Dragon(_) | Body::Golem(_) | Body::QuadrupedLow(_) => {
@@ -278,11 +278,11 @@ impl Body {
 
     /// Returns how well a body can move backwards while strafing (0.0 = not at
     /// all, 1.0 = same as forward)
-    pub fn reverse_move_factor(&self) -> f32 { 0.45 }
+    pub fn reverse_move_factor(&self) -> f64 { 0.45 }
 
     /// Returns the position where a projectile should be fired relative to this
     /// body
-    pub fn projectile_offsets(&self, ori: Vec3<f32>) -> Vec3<f32> {
+    pub fn projectile_offsets(&self, ori: Vec3<f64>) -> Vec3<f64> {
         let body_offsets_z = match self {
             Body::Golem(_) => self.height() * 0.4,
             _ => self.eye_height(),
@@ -335,7 +335,7 @@ pub fn handle_skating(data: &JoinData, update: &mut StateUpdate) {
 }
 
 /// Handles updating `Components` to move player based on state of `JoinData`
-pub fn handle_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) {
+pub fn handle_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f64) {
     let submersion = data
         .physics
         .in_liquid()
@@ -359,8 +359,8 @@ pub fn handle_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f3
 }
 
 /// Updates components to move player as if theyre on ground or in air
-fn basic_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) {
-    let efficiency = efficiency * data.stats.move_speed_modifier * data.stats.friction_modifier;
+fn basic_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f64) {
+    let efficiency = efficiency * data.stats.move_speed_modifier as f64 * data.stats.friction_modifier as f64;
 
     let accel = if let Some(block) = data.physics.on_ground {
         // FRIC_GROUND temporarily used to normalize things around expected values
@@ -370,7 +370,7 @@ fn basic_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) {
     } * efficiency;
 
     // Should ability to backpedal be separate from ability to strafe?
-    update.vel.0 += Vec2::broadcast(data.dt.0)
+    update.vel.0 += Vec2::broadcast(data.dt.0 as f64)
         * accel
         * if data.body.can_strafe() {
             data.inputs.move_dir
@@ -413,10 +413,10 @@ pub fn handle_forced_movement(
                 // FRIC_GROUND temporarily used to normalize things around expected values
                 data.body.base_accel() * block.get_traction() * block.get_friction() / FRIC_GROUND
             }) {
-                update.vel.0 += Vec2::broadcast(data.dt.0)
+                update.vel.0 += Vec2::broadcast(data.dt.0 as f64)
                     * accel
                     * (data.inputs.move_dir * 0.5 + Vec2::from(update.ori) * 1.5)
-                    * strength;
+                    * strength as f64;
             }
         },
         ForcedMovement::Leap {
@@ -453,7 +453,7 @@ pub fn handle_forced_movement(
 pub fn handle_orientation(
     data: &JoinData<'_>,
     update: &mut StateUpdate,
-    efficiency: f32,
+    efficiency: f64,
     dir_override: Option<Dir>,
 ) {
     /// first check for horizontal
@@ -465,7 +465,7 @@ pub fn handle_orientation(
         }
     }
     /// compute an upper limit for the difference of two orientations
-    fn ori_absdiff(a: &crate::comp::Ori, b: &crate::comp::Ori) -> f32 {
+    fn ori_absdiff(a: &crate::comp::Ori, b: &crate::comp::Ori) -> f64 {
         (a.to_quat().into_vec4() - b.to_quat().into_vec4()).reduce(|a, b| a.abs() + b.abs())
     }
 
@@ -492,7 +492,7 @@ pub fn handle_orientation(
         } else {
             0.2
         }
-        * data.dt.0;
+        * data.dt.0 as f64;
     // very rough guess
     let ticks_from_target_guess = ori_absdiff(&update.ori, &target_ori) / half_turns_per_tick;
     let instantaneous = ticks_from_target_guess < 1.0;
@@ -516,17 +516,17 @@ pub fn handle_orientation(
 fn swim_move(
     data: &JoinData<'_>,
     update: &mut StateUpdate,
-    efficiency: f32,
-    submersion: f32,
+    efficiency: f64,
+    submersion: f64,
 ) -> bool {
-    let efficiency = efficiency * data.stats.move_speed_modifier * data.stats.friction_modifier;
+    let efficiency = efficiency * data.stats.move_speed_modifier as f64 * data.stats.friction_modifier as f64;
     if let Some(force) = data.body.swim_thrust() {
         let force = efficiency * force;
         let mut water_accel = force / data.mass.0;
 
         if let Ok(level) = data.skill_set.skill_level(Skill::Swim(SwimSkill::Speed)) {
             let modifiers = SKILL_MODIFIERS.general_tree.swim;
-            water_accel *= modifiers.speed.powi(level.into());
+            water_accel *= modifiers.speed.powi(level.into()) as f64;
         }
 
         let dir = if data.body.can_strafe() {
@@ -537,13 +537,13 @@ fn swim_move(
         };
 
         // Autoswim to stay afloat
-        let move_z = if submersion < 1.0 && data.inputs.move_z.abs() < f32::EPSILON {
+        let move_z = if submersion < 1.0 && data.inputs.move_z.abs() < f64::EPSILON {
             (submersion - 0.1).max(0.0)
         } else {
             data.inputs.move_z
         };
 
-        update.vel.0 += Vec3::broadcast(data.dt.0)
+        update.vel.0 += Vec3::broadcast(data.dt.0 as f64)
             * Vec3::new(dir.x, dir.y, move_z)
                 .try_normalized()
                 .unwrap_or_default()
@@ -557,8 +557,8 @@ fn swim_move(
 }
 
 /// Updates components to move entity as if it's flying
-pub fn fly_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) -> bool {
-    let efficiency = efficiency * data.stats.move_speed_modifier * data.stats.friction_modifier;
+pub fn fly_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f64) -> bool {
+    let efficiency = efficiency * data.stats.move_speed_modifier as f64 * data.stats.friction_modifier as f64;
 
     let glider = match data.character {
         CharacterState::Glide(data) => Some(data),
@@ -579,18 +579,18 @@ pub fn fly_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) 
             // flappy flappy
             Body::Dragon(_) | Body::BirdLarge(_) | Body::BirdMedium(_) => {
                 let anti_grav = GRAVITY * (1.0 + data.inputs.move_z.min(0.0));
-                update.vel.0.z += data.dt.0 * (anti_grav + accel * data.inputs.move_z.max(0.0));
+                update.vel.0.z += data.dt.0 as f64 * (anti_grav + accel * data.inputs.move_z.max(0.0));
             },
             // floaty floaty
             Body::Ship(ship) if ship.can_fly() => {
-                let regulate_density = |min: f32, max: f32, def: f32, rate: f32| -> Density {
+                let regulate_density = |min: f64, max: f64, def: f64, rate: f64| -> Density {
                     // Reset to default on no input
-                    let change = if data.inputs.move_z.abs() > f32::EPSILON {
+                    let change = if data.inputs.move_z.abs() > f64::EPSILON {
                         -data.inputs.move_z
                     } else {
                         (def - data.density.0).max(-1.0).min(1.0)
                     };
-                    Density((update.density.0 + data.dt.0 * rate * change).clamp(min, max))
+                    Density((update.density.0 + data.dt.0 as f64 * rate * change).clamp(min, max))
                 };
                 let def_density = ship.density().0;
                 if data.physics.in_liquid().is_some() {
@@ -607,7 +607,7 @@ pub fn fly_move(data: &JoinData<'_>, update: &mut StateUpdate, efficiency: f32) 
             _ => {},
         };
 
-        update.vel.0 += Vec2::broadcast(data.dt.0)
+        update.vel.0 += Vec2::broadcast(data.dt.0 as f64)
             * accel
             * if data.body.can_strafe() {
                 data.inputs.move_dir
@@ -787,10 +787,10 @@ pub fn handle_manipulate_loadout(
             }
         },
         InventoryAction::Collect(sprite_pos) => {
-            let sprite_pos_f32 = sprite_pos.map(|x| x as f32 + 0.5);
+            let sprite_pos_f32 = sprite_pos.map(|x| x as f64 + 0.5);
             // Closure to check if distance between a point and the sprite is less than
             // MAX_PICKUP_RANGE and the radius of the body
-            let sprite_range_check = |pos: Vec3<f32>| {
+            let sprite_range_check = |pos: Vec3<f64>| {
                 (sprite_pos_f32 - pos).magnitude_squared()
                     < (MAX_PICKUP_RANGE + data.body.max_radius()).powi(2)
             };
@@ -820,7 +820,7 @@ pub fn handle_manipulate_loadout(
                         (3.0 * (sprite_pos_f32 - data.pos.0).map(|x| x.abs()).sum()) as usize;
                     // Heuristic compares manhattan distance of start and end pos
                     let heuristic =
-                        move |pos: &Vec3<i32>| (sprite_pos - pos).map(|x| x.abs()).sum() as f32;
+                        move |pos: &Vec3<i32>| (sprite_pos - pos).map(|x| x.abs()).sum() as f64;
 
                     let mut astar = Astar::new(
                         iters,
@@ -850,7 +850,7 @@ pub fn handle_manipulate_loadout(
                     // Transition uses manhattan distance as the cost, with a slightly lower cost
                     // for z transitions
                     let transition = |a: &Vec3<i32>, b: &Vec3<i32>| {
-                        let (a, b) = (a.map(|x| x as f32), b.map(|x| x as f32));
+                        let (a, b) = (a.map(|x| x as f64), b.map(|x| x as f64));
                         ((a - b) * Vec3::new(1.0, 1.0, 0.9)).map(|e| e.abs()).sum()
                     };
                     // Pathing satisfied when it reaches the sprite position
@@ -934,7 +934,7 @@ pub fn handle_jump(
         .map(|impulse| {
             output_events.emit_local(LocalEvent::Jump(
                 data.entity,
-                strength * impulse / data.mass.0 * data.stats.move_speed_modifier,
+                strength as f64 * impulse / data.mass.0 * data.stats.move_speed_modifier as f64,
             ));
         })
         .is_some()
@@ -1190,13 +1190,13 @@ pub enum ForcedMovement {
         strength: f32,
     },
     Leap {
-        vertical: f32,
-        forward: f32,
-        progress: f32,
+        vertical: f64,
+        forward: f64,
+        progress: f64,
         direction: MovementDirection,
     },
     Hover {
-        move_input: f32,
+        move_input: f64,
     },
 }
 
@@ -1207,7 +1207,7 @@ pub enum MovementDirection {
 }
 
 impl MovementDirection {
-    pub fn get_2d_dir(self, data: &JoinData<'_>) -> Vec2<f32> {
+    pub fn get_2d_dir(self, data: &JoinData<'_>) -> Vec2<f64> {
         use MovementDirection::*;
         match self {
             Look => data

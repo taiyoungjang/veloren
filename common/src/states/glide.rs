@@ -13,7 +13,7 @@ use crate::{
     util::{Dir, Plane, Projection},
 };
 use serde::{Deserialize, Serialize};
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use vek::*;
 
 const PITCH_SLOW_TIME: f32 = 0.5;
@@ -38,7 +38,7 @@ impl Data {
     ///
     ///  https://en.wikipedia.org/wiki/Elliptical_wing
     pub fn new(span_length: f32, chord_length: f32, ori: Ori) -> Self {
-        let planform_area = PI * chord_length * span_length * 0.25;
+        let planform_area = std::f32::consts::PI * chord_length * span_length * 0.25;
         let aspect_ratio = span_length.powi(2) / planform_area;
         Self {
             aspect_ratio,
@@ -66,8 +66,8 @@ impl Data {
                     .xy()
                     .try_normalized()
                     .map_or(0.0, |ld| {
-                        PI * 0.1 * ld.dot(move_dir) * self.timer.min(PITCH_SLOW_TIME)
-                            / PITCH_SLOW_TIME
+                        PI * 0.1 * ld.dot(move_dir) * self.timer.min(PITCH_SLOW_TIME) as f64
+                            / PITCH_SLOW_TIME as f64
                     }),
             )
             .look_dir()
@@ -80,7 +80,7 @@ impl CharacterBehavior for Data {
 
         // If player is on ground, end glide
         if data.physics.on_ground.is_some()
-            && (data.vel.0 - data.physics.ground_vel).magnitude_squared() < 2_f32.powi(2)
+            && (data.vel.0 - data.physics.ground_vel).magnitude_squared() < 2_f64.powi(2)
         {
             update.character = CharacterState::GlideWield(glide_wield::Data::from(data));
         } else if data.physics.in_liquid().is_some()
@@ -103,7 +103,7 @@ impl CharacterBehavior for Data {
                 let slerp_s = {
                     let angle = self.ori.look_dir().angle_between(*data.inputs.look_dir);
                     let rate = 0.4 * PI / angle;
-                    (data.dt.0 * rate).min(1.0)
+                    (data.dt.0 as f64 * rate).min(1.0)
                 };
 
                 Dir::from_unnormalized(air_flow.0)
@@ -133,8 +133,8 @@ impl CharacterBehavior for Data {
                             .unwrap_or_else(Dir::up);
                         let global_roll = tgt_dir_up.rotation_between(tgt_up);
                         let global_pitch = angle_of_attack(&tgt_dir_ori, &flow_dir)
-                            * self.timer.min(PITCH_SLOW_TIME)
-                            / PITCH_SLOW_TIME;
+                            * self.timer.min(PITCH_SLOW_TIME) as f64
+                            / PITCH_SLOW_TIME as f64;
 
                         self.ori.slerped_towards(
                             tgt_dir_ori.prerotated(global_roll).pitched_up(global_pitch),
@@ -147,13 +147,13 @@ impl CharacterBehavior for Data {
             update.ori = {
                 let slerp_s = {
                     let angle = data.ori.look_dir().angle_between(*data.inputs.look_dir);
-                    let rate = 0.2 * data.body.base_ori_rate() * PI / angle;
-                    (data.dt.0 * rate).min(1.0)
+                    let rate = 0.2 * data.body.base_ori_rate() as f64 * PI / angle;
+                    (data.dt.0 as f64 * rate).min(1.0)
                 };
 
                 let rot_from_drag = {
                     let speed_factor =
-                        air_flow.0.magnitude_squared().min(40_f32.powi(2)) / 40_f32.powi(2);
+                        air_flow.0.magnitude_squared().min(40_f64.powi(2)) / 40_f64.powi(2);
 
                     Quaternion::rotation_3d(
                         -PI / 2.0 * speed_factor,

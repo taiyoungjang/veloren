@@ -56,7 +56,7 @@ impl CharacterBehavior for Data {
                             output_events.emit_server(ServerEvent::TeleportTo {
                                 entity: data.entity,
                                 target,
-                                max_range: Some(self.static_data.max_range),
+                                max_range: Some(self.static_data.max_range as f64),
                             });
                         } else if let Some(pos) = input_attr.select_pos {
                             update.pos.0 = pos;

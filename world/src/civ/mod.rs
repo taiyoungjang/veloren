@@ -190,7 +190,7 @@ impl Civs {
                 SiteKind::Gnarling => (16i32, 10.0),
             };
 
-            let (raise, raise_dist, make_waypoint): (f32, i32, bool) = match &site.kind {
+            let (raise, raise_dist, make_waypoint): (f64, i32, bool) = match &site.kind {
                 SiteKind::Settlement => (10.0, 6, true),
                 SiteKind::Castle => (0.0, 6, true),
                 _ => (0.0, 0, false),
@@ -201,7 +201,7 @@ impl Civs {
                 for offs in Spiral2d::new().take(radius.pow(2) as usize) {
                     let center_alt = center_alt
                         + if offs.magnitude_squared() <= raise_dist.pow(2) {
-                            raise
+                            raise as f32
                         } else {
                             0.0
                         }; // Raise the town centre up a little
@@ -221,9 +221,9 @@ impl Civs {
                             // to worry about the case where water_alt is already set to a correct
                             // value higher than alt, since this chunk should have been filtered
                             // out in that case).
-                            chunk.water_alt = CONFIG.sea_level.max(chunk.water_alt + diff);
-                            chunk.alt += diff;
-                            chunk.basement += diff;
+                            chunk.water_alt = CONFIG.sea_level.max(chunk.water_alt + diff as f32);
+                            chunk.alt += diff as f32;
+                            chunk.basement += diff as f32;
                             chunk.rockiness = 0.0;
                             chunk.surface_veg *= 1.0 - factor * rng.gen_range(0.25..0.9);
 
@@ -534,13 +534,13 @@ impl Civs {
     }
 
     /// Find the cheapest route between two places
-    fn route_between(&self, a: Id<Site>, b: Id<Site>) -> Option<(Path<Id<Site>>, f32)> {
+    fn route_between(&self, a: Id<Site>, b: Id<Site>) -> Option<(Path<Id<Site>>, f64)> {
         let heuristic = move |p: &Id<Site>| {
             (self
                 .sites
                 .get(*p)
                 .center
-                .distance_squared(self.sites.get(b).center) as f32)
+                .distance_squared(self.sites.get(b).center) as f64)
                 .sqrt()
         };
         let neighbors = |p: &Id<Site>| self.neighbors(*p);
@@ -864,9 +864,9 @@ impl Civs {
                     .1
                     .iter()
                     .map(|b| {
-                        uniform_idx_as_vec2(map_size_lg, *b).as_::<f32>() / biome.1.len() as f32
+                        uniform_idx_as_vec2(map_size_lg, *b).as_::<f64>() / biome.1.len() as f64
                     })
-                    .sum::<Vec2<f32>>()
+                    .sum::<Vec2<f64>>()
                     .as_::<i32>();
                 // Select the point closest to the center
                 let idx = *biome
@@ -1013,7 +1013,7 @@ impl Civs {
                     if self
                         .route_between(site, nearby)
                         // If the novel path isn't efficient compared to existing routes, don't use it
-                        .filter(|(_, route_cost)| *route_cost < cost * 3.0)
+                        .filter(|(_, route_cost)| *route_cost < cost as f64 * 3.0)
                         .is_none()
                     {
                         // Write the track to the world as a path
@@ -1062,10 +1062,10 @@ fn find_path(
     ctx: &mut GenCtx<impl Rng>,
     a: Vec2<i32>,
     b: Vec2<i32>,
-) -> Option<(Path<Vec2<i32>>, f32)> {
+) -> Option<(Path<Vec2<i32>>, f64)> {
     const MAX_PATH_ITERS: usize = 100_000;
     let sim = &ctx.sim;
-    let heuristic = move |l: &Vec2<i32>| (l.distance_squared(b) as f32).sqrt();
+    let heuristic = move |l: &Vec2<i32>| (l.distance_squared(b) as f64).sqrt();
     let neighbors = |l: &Vec2<i32>| {
         let l = *l;
         NEIGHBORS
@@ -1095,17 +1095,17 @@ fn find_path(
 /// Return Some if travel between a location and a chunk next to it is permitted
 /// If permitted, the approximate relative const of traversal is given
 // (TODO: by whom?)
-fn walk_in_dir(sim: &WorldSim, a: Vec2<i32>, dir: Vec2<i32>) -> Option<f32> {
+fn walk_in_dir(sim: &WorldSim, a: Vec2<i32>, dir: Vec2<i32>) -> Option<f64> {
     if loc_suitable_for_walking(sim, a) && loc_suitable_for_walking(sim, a + dir) {
         let a_chunk = sim.get(a)?;
         let b_chunk = sim.get(a + dir)?;
 
-        let hill_cost = ((b_chunk.alt - a_chunk.alt).abs() / 5.0).powi(2);
+        let hill_cost = ((b_chunk.alt as f64 - a_chunk.alt as f64).abs() / 5.0).powi(2);
         let water_cost = if b_chunk.river.near_water() {
             50.0
         } else {
             0.0
-        } + (b_chunk.water_alt - b_chunk.alt + 8.0).clamped(0.0, 8.0) * 3.0; // Try not to path swamps / tidal areas
+        } + (b_chunk.water_alt as f64 - b_chunk.alt as f64 + 8.0).clamped(0.0, 8.0) * 3.0; // Try not to path swamps / tidal areas
         let wild_cost = if b_chunk.path.0.is_way() {
             0.0 // Traversing existing paths has no additional cost!
         } else {
@@ -1208,7 +1208,7 @@ pub struct Track {
     /// Cost of using this track relative to other paths. This cost is an
     /// arbitrary unit and doesn't make sense unless compared to other track
     /// costs.
-    cost: f32,
+    cost: f64,
     path: Path<Vec2<i32>>,
 }
 

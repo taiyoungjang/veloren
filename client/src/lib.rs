@@ -109,8 +109,8 @@ pub enum Event {
     CharacterEdited(CharacterId),
     CharacterError(String),
     MapMarker(comp::MapMarkerUpdate),
-    StartSpectate(Vec3<f32>),
-    SpectatePosition(Vec3<f32>),
+    StartSpectate(Vec3<f64>),
+    SpectatePosition(Vec3<f64>),
 }
 
 pub struct WorldData {
@@ -180,15 +180,15 @@ impl WeatherLerp {
         }
         if old.size() == new.size() {
             // Assumes updates are regular
-            let t = (self.new.1.elapsed().as_secs_f32()
-                / self.new.1.duration_since(self.old.1).as_secs_f32())
+            let t = (self.new.1.elapsed().as_secs_f64()
+                / self.new.1.duration_since(self.old.1).as_secs_f64())
             .clamp(0.0, 1.0);
 
             to_update
                 .iter_mut()
                 .zip(old.iter().zip(new.iter()))
                 .for_each(|((_, current), ((_, old), (_, new)))| {
-                    *current = Weather::lerp_unclamped(old, new, t);
+                    *current = Weather::lerp_unclamped(old, new, t as f32);
                 });
         }
     }
@@ -256,7 +256,7 @@ pub struct Client {
     view_distance: Option<u32>,
     lod_distance: f32,
     // TODO: move into voxygen
-    loaded_distance: f32,
+    loaded_distance: f64,
 
     pending_chunks: HashMap<Vec2<i32>, Instant>,
     target_time_of_day: Option<TimeOfDay>,
@@ -1401,7 +1401,7 @@ impl Client {
 
     /// Set the current position to spectate, returns true if the client's
     /// player has a Pos component to write to.
-    pub fn spectate_position(&mut self, pos: Vec3<f32>) -> bool {
+    pub fn spectate_position(&mut self, pos: Vec3<f64>) -> bool {
         let write = if let Some(position) = self
             .state
             .ecs()
@@ -1509,7 +1509,7 @@ impl Client {
         &mut self,
         input: InputKind,
         pressed: bool,
-        select_pos: Option<Vec3<f32>>,
+        select_pos: Option<Vec3<f64>>,
         target_entity: Option<EcsEntity>,
     ) {
         if pressed {
@@ -1539,9 +1539,9 @@ impl Client {
 
     pub fn server_view_distance_limit(&self) -> Option<u32> { self.server_view_distance_limit }
 
-    pub fn loaded_distance(&self) -> f32 { self.loaded_distance }
+    pub fn loaded_distance(&self) -> f64 { self.loaded_distance }
 
-    pub fn position(&self) -> Option<Vec3<f32>> {
+    pub fn position(&self) -> Option<Vec3<f64>> {
         self.state
             .read_storage::<comp::Pos>()
             .get(self.entity())
@@ -1557,7 +1557,7 @@ impl Client {
 
     pub fn current_chunk(&self) -> Option<Arc<TerrainChunk>> {
         let chunk_pos = Vec2::from(self.position()?)
-            .map2(TerrainChunkSize::RECT_SIZE, |e: f32, sz| {
+            .map2(TerrainChunkSize::RECT_SIZE, |e: f64, sz| {
                 (e as u32).div_euclid(sz) as i32
             });
 
@@ -1591,7 +1591,7 @@ impl Client {
             //contains_cave = chunk.meta().contains_cave();
             site = chunk.meta().site();
         }
-        if player_alt < terrain_alt - 40.0 {
+        if player_alt < terrain_alt as f64 - 40.0 {
             if let Some(SiteKindMeta::Dungeon(dungeon)) = site {
                 SiteKindMeta::Dungeon(dungeon)
             } else {
@@ -1877,7 +1877,7 @@ impl Client {
 
             let mut current_tick_send_chunk_requests = 0;
             // Request chunks from the server.
-            self.loaded_distance = ((view_distance * TerrainChunkSize::RECT_SIZE.x) as f32).powi(2);
+            self.loaded_distance = ((view_distance * TerrainChunkSize::RECT_SIZE.x) as f64).powi(2);
             // +1 so we can find a chunk that's outside the vd for better fog
             for dist in 0..view_distance as i32 + 1 {
                 // Only iterate through chunks that need to be loaded for circular vd
@@ -1907,8 +1907,8 @@ impl Client {
                     ];
 
                     for key in keys.iter() {
-                        let dist_to_player = (TerrainGrid::key_chunk(*key).map(|x| x as f32)
-                            + TerrainChunkSize::RECT_SIZE.map(|x| x as f32) / 2.0)
+                        let dist_to_player = (TerrainGrid::key_chunk(*key).map(|x| x as f64)
+                            + TerrainChunkSize::RECT_SIZE.map(|x| x as f64) / 2.0)
                             .distance_squared(pos.0.into());
 
                         let terrain = self.state.terrain();
@@ -1945,8 +1945,8 @@ impl Client {
                 }
             }
             self.loaded_distance = self.loaded_distance.sqrt()
-                - ((TerrainChunkSize::RECT_SIZE.x as f32 / 2.0).powi(2)
-                    + (TerrainChunkSize::RECT_SIZE.y as f32 / 2.0).powi(2))
+                - ((TerrainChunkSize::RECT_SIZE.x as f64 / 2.0).powi(2)
+                    + (TerrainChunkSize::RECT_SIZE.y as f64 / 2.0).powi(2))
                 .sqrt();
 
             // If chunks are taking too long, assume they're no longer pending.

@@ -91,7 +91,7 @@ impl<'a> System<'a> for Sys {
             // Mine blocks broken by the attack
             if let Some((block_pos, tool)) = melee_attack.break_block {
                 // Check distance to block
-                if eye_pos.distance_squared(block_pos.map(|e| e as f32 + 0.5))
+                if eye_pos.distance_squared(block_pos.map(|e| e as f64 + 0.5))
                     < (rad + scale * melee_attack.range).powi(2)
                 {
                     server_emitter.emit(ServerEvent::MineBlock {
@@ -116,7 +116,7 @@ impl<'a> System<'a> for Sys {
 
                 // 2D versions
                 let pos2 = Vec2::from(pos.0);
-                let pos_b2 = Vec2::<f32>::from(pos_b.0);
+                let pos_b2 = Vec2::<f64>::from(pos_b.0);
                 let ori2 = Vec2::from(look_dir);
 
                 // Scales

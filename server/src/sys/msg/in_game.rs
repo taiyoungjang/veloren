@@ -124,8 +124,8 @@ impl Sys {
                         .map_or(true, |s| s.client_authoritative())
                 {
                     enum Rejection {
-                        TooFar { old: Vec3<f32>, new: Vec3<f32> },
-                        TooFast { vel: Vec3<f32> },
+                        TooFar { old: Vec3<f64>, new: Vec3<f64> },
+                        TooFast { vel: Vec3<f64> },
                     }
 
                     let rejection = if maybe_admin.is_some() {
@@ -139,7 +139,7 @@ impl Sys {
                             // Check position
                             .or_else(|| {
                                 if let Some(prev_pos) = positions.get(entity) {
-                                    if prev_pos.0.distance_squared(pos.0) > (500.0f32).powf(2.0) {
+                                    if prev_pos.0.distance_squared(pos.0) > (500.0f64).powf(2.0) {
                                         Some(Rejection::TooFar { old: prev_pos.0, new: pos.0 })
                                     } else {
                                         None
@@ -150,7 +150,7 @@ impl Sys {
                             })
                             // Check velocity
                             .or_else(|| {
-                                if vel.0.magnitude_squared() > (500.0f32).powf(2.0) {
+                                if vel.0.magnitude_squared() > (500.0f64).powf(2.0) {
                                     Some(Rejection::TooFast { vel: vel.0 })
                                 } else {
                                     None

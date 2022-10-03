@@ -118,19 +118,19 @@ use vek::*;
 /// observe to prevent tracking distant entities. It approximates the distance
 /// at which the volume of the sfx emitted is too quiet to be meaningful for the
 /// player.
-const SFX_DIST_LIMIT_SQR: f32 = 20000.0;
+const SFX_DIST_LIMIT_SQR: f64 = 20000.0;
 
 pub struct SfxEventItem {
     /// The SFX event that triggers this sound
     pub sfx: SfxEvent,
     /// The position at which the sound should play
-    pub pos: Option<Vec3<f32>>,
+    pub pos: Option<Vec3<f64>>,
     /// The volume to play the sound at
     pub vol: Option<f32>,
 }
 
 impl SfxEventItem {
-    pub fn new(sfx: SfxEvent, pos: Option<Vec3<f32>>, vol: Option<f32>) -> Self {
+    pub fn new(sfx: SfxEvent, pos: Option<Vec3<f64>>, vol: Option<f32>) -> Self {
         Self { sfx, pos, vol }
     }
 
@@ -390,12 +390,12 @@ impl SfxMgr {
             return;
         }
 
-        let focus_off = camera.get_focus_pos().map(f32::trunc);
-        let cam_pos = camera.dependents().cam_pos + focus_off;
+        let focus_off = camera.get_focus_pos().map(|x|x as f64).map(f64::trunc);
+        let cam_pos = camera.dependents().cam_pos.map(|x|x as f64) + focus_off;
 
         // Sets the listener position to the camera position facing the
         // same direction as the camera
-        audio.set_listener_pos(cam_pos, camera.dependents().cam_dir);
+        audio.set_listener_pos(cam_pos.map(|x|x as f32), camera.dependents().cam_dir);
 
         let triggers = self.triggers.read();
 
@@ -436,13 +436,13 @@ impl SfxMgr {
                 );
             },
             Outcome::Lightning { pos } => {
-                let power = (1.0 - pos.distance(audio.listener.pos) / 5_000.0)
+                let power = (1.0 - pos.distance(audio.listener.pos.map(|x|x as f64)) / 5_000.0)
                     .max(0.0)
                     .powi(7);
                 if power > 0.0 {
                     let sfx_trigger_item = triggers.get_key_value(&SfxEvent::Lightning);
                     // TODO: Don't use UI sfx, add a way to control position falloff
-                    audio.emit_ui_sfx(sfx_trigger_item, Some((power * 3.0).min(2.9)));
+                    audio.emit_ui_sfx(sfx_trigger_item, Some((power as f32 * 3.0).min(2.9)));
                 }
             },
             Outcome::GroundSlam { pos, .. } => {
@@ -534,7 +534,7 @@ impl SfxMgr {
                 let sfx_trigger_item = triggers.get_key_value(&SfxEvent::BreakBlock);
                 audio.emit_sfx(
                     sfx_trigger_item,
-                    pos.map(|e| e as f32 + 0.5),
+                    pos.map(|e| e as f64 + 0.5),
                     Some(3.0),
                     underwater,
                 );

@@ -40,7 +40,7 @@ impl CharacterBehavior for Data {
         let mut update = StateUpdate::from(data);
 
         handle_orientation(data, &mut update, 1.0, None);
-        handle_move(data, &mut update, self.static_data.movement_speed);
+        handle_move(data, &mut update, self.static_data.movement_speed as f64);
 
         match self.stage_section {
             StageSection::Buildup => {

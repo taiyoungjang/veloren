@@ -199,7 +199,7 @@ impl TerrainChunk {
     }
 
     /// Find the highest or lowest accessible position within the chunk
-    pub fn find_accessible_pos(&self, spawn_wpos: Vec2<i32>, ascending: bool) -> Vec3<f32> {
+    pub fn find_accessible_pos(&self, spawn_wpos: Vec2<i32>, ascending: bool) -> Vec3<f64> {
         let min_z = self.get_min_z();
         let max_z = self.get_max_z();
 
@@ -234,7 +234,7 @@ impl TerrainChunk {
                     })
             })
             .unwrap_or(pos)
-            .map(|e| e as f32)
+            .map(|e| e as f64)
             + 0.5
     }
 }

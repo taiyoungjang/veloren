@@ -196,18 +196,18 @@ const MENU_BG: Color = Color::Rgba(0.1, 0.12, 0.12, 1.0);
 //const UI_DARK_0: Color = Color::Rgba(0.25, 0.37, 0.37, 1.0);
 
 /// Distance at which nametags are visible for group members
-const NAMETAG_GROUP_RANGE: f32 = 1000.0;
+const NAMETAG_GROUP_RANGE: f64 = 1000.0;
 /// Distance at which nametags are visible for merchants
-const NAMETAG_MERCHANT_RANGE: f32 = 50.0;
+const NAMETAG_MERCHANT_RANGE: f64 = 50.0;
 /// Distance at which nametags are visible
-const NAMETAG_RANGE: f32 = 40.0;
+const NAMETAG_RANGE: f64 = 40.0;
 /// Time nametags stay visible after doing damage even if they are out of range
 /// in seconds
 const NAMETAG_DMG_TIME: f32 = 60.0;
 /// Range damaged triggered nametags can be seen
-const NAMETAG_DMG_RANGE: f32 = 120.0;
+const NAMETAG_DMG_RANGE: f64 = 120.0;
 /// Range to display speech-bubbles at
-const SPEECH_BUBBLE_RANGE: f32 = NAMETAG_RANGE;
+const SPEECH_BUBBLE_RANGE: f64 = NAMETAG_RANGE;
 const EXP_FLOATER_LIFETIME: f32 = 2.0;
 const EXP_ACCUMULATION_DURATION: f32 = 0.5;
 
@@ -1815,8 +1815,8 @@ impl Hud {
 
                 make_overitem(
                     item,
-                    pos.0 + Vec3::unit_z() * 1.2,
-                    distance,
+                    pos.0.map(|x|x as f32) + Vec3::unit_z() * 1.2,
+                    distance as f32,
                     overitem::OveritemProperties {
                         active: interactable.as_ref().and_then(|i| i.entity()) == Some(entity),
                         pickup_failed_pulse: self.failed_entity_pickups.get(&entity).cloned(),
@@ -1838,7 +1838,7 @@ impl Hud {
                     active: true,
                     pickup_failed_pulse: self.failed_block_pickups.get(&pos).cloned(),
                 };
-                let pos = pos.map(|e| e as f32 + 0.5);
+                let pos = pos.map(|e| e as f64 + 0.5);
                 let over_pos = pos + Vec3::unit_z() * 0.7;
 
                 // This is only done once per frame, so it's not a performance issue
@@ -1850,7 +1850,7 @@ impl Hud {
                     overitem::Overitem::new(
                         desc,
                         overitem::TEXT_COLOR,
-                        pos.distance_squared(player_pos),
+                        pos.distance_squared(player_pos) as f32,
                         &self.fonts,
                         i18n,
                         &global_state.settings.controls,
@@ -1860,13 +1860,13 @@ impl Hud {
                         vec![(GameInput::Interact, i18n.get_msg("hud-open").to_string())],
                     )
                     .x_y(0.0, 100.0)
-                    .position_ingame(over_pos)
+                    .position_ingame(over_pos.map(|x|x as f32))
                     .set(overitem_id, ui_widgets);
                 } else if let Some(item) = Item::try_reclaim_from_block(block) {
                     make_overitem(
                         &item,
-                        over_pos,
-                        pos.distance_squared(player_pos),
+                        over_pos.map(|x|x as f32),
+                        pos.distance_squared(player_pos) as f32,
                         overitem_properties,
                         &self.fonts,
                         match interaction {
@@ -1887,7 +1887,7 @@ impl Hud {
                     overitem::Overitem::new(
                         desc,
                         overitem::TEXT_COLOR,
-                        pos.distance_squared(player_pos),
+                        pos.distance_squared(player_pos) as f32,
                         &self.fonts,
                         i18n,
                         &global_state.settings.controls,
@@ -1897,7 +1897,7 @@ impl Hud {
                         vec![(GameInput::Interact, i18n.get_msg("hud-use").to_string())],
                     )
                     .x_y(0.0, 100.0)
-                    .position_ingame(over_pos)
+                    .position_ingame(over_pos.map(|x|x as f32))
                     .set(overitem_id, ui_widgets);
                 }
             } else if let Some(Interactable::Entity(e)) = interactable {
@@ -1929,7 +1929,7 @@ impl Hud {
                     overitem::Overitem::new(
                         i18n.get_msg("hud-crafting-campfire"),
                         overitem::TEXT_COLOR,
-                        pos.distance_squared(player_pos),
+                        pos.distance_squared(player_pos) as f32,
                         &self.fonts,
                         i18n,
                         &global_state.settings.controls,
@@ -1939,7 +1939,7 @@ impl Hud {
                         vec![(GameInput::Interact, i18n.get_msg("hud-sit").to_string())],
                     )
                     .x_y(0.0, 100.0)
-                    .position_ingame(over_pos)
+                    .position_ingame(over_pos.map(|x|x as f32))
                     .set(overitem_id, ui_widgets);
                 }
             }
@@ -2115,7 +2115,7 @@ impl Hud {
                     },
                 )
                 .x_y(0.0, 100.0)
-                .position_ingame(ingame_pos)
+                .position_ingame(ingame_pos.map(|x|x as f32))
                 .set(overhead_id, ui_widgets);
 
                 // Enemy SCT
@@ -2224,7 +2224,7 @@ impl Hud {
                                 Color::Rgba(0.0, 0.0, 0.0, 1.0)
                             })
                             .x_y(x, y - 3.0)
-                            .position_ingame(ingame_pos)
+                            .position_ingame(ingame_pos.map(|x|x as f32))
                             .set(sct_bg_id, ui_widgets);
                         Text::new(&hp_dmg_text)
                             .font_size(font_size)
@@ -2235,7 +2235,7 @@ impl Hud {
                             } else {
                                 Color::Rgba(0.1, 1.0, 0.1, 1.0)
                             })
-                            .position_ingame(ingame_pos)
+                            .position_ingame(ingame_pos.map(|x|x as f32))
                             .set(sct_id, ui_widgets);
                     }
                 }
@@ -2375,7 +2375,7 @@ impl Hud {
             Text::new(&format!(
                 "View distance: {:.2} blocks ({:.2} chunks)",
                 client.loaded_distance(),
-                client.loaded_distance() / TerrainChunk::RECT_SIZE.x as f32,
+                client.loaded_distance() / TerrainChunk::RECT_SIZE.x as f64,
             ))
             .color(TEXT_COLOR)
             .down_from(self.ids.look_direction, V_PAD)
@@ -2661,7 +2661,7 @@ impl Hud {
             &self.rot_imgs,
             &self.world_map,
             &self.fonts,
-            camera.get_orientation(),
+            camera.get_orientation().map(|x|x as f32),
             global_state,
             &self.show.location_markers,
             &self.voxel_minimap,
@@ -4269,7 +4269,7 @@ impl Hud {
             self.show.crafting_fields.craft_sprite.filter(|(pos, _)| {
                 self.show.crafting
                     && if let Some(player_pos) = client.position() {
-                        pos.map(|e| e as f32 + 0.5).distance(player_pos) < MAX_PICKUP_RANGE
+                        pos.map(|e| e as f64 + 0.5).distance(player_pos) < MAX_PICKUP_RANGE
                     } else {
                         false
                     }
@@ -4295,7 +4295,7 @@ impl Hud {
         let camera::Dependents {
             view_mat, proj_mat, ..
         } = camera.dependents();
-        let focus_off = camera.get_focus_pos().map(f32::trunc);
+        let focus_off = camera.get_focus_pos().map(f64::trunc);
 
         // Check if item images need to be reloaded
         self.item_imgs.reload_if_changed(&mut self.ui);
@@ -4307,7 +4307,7 @@ impl Hud {
             global_state.window.renderer_mut(),
             None,
             //Some(&pool),
-            Some(proj_mat * view_mat * Mat4::translation_3d(-focus_off)),
+            Some(proj_mat * view_mat * Mat4::translation_3d(-focus_off.map(|x|x as f32) )),
         );
 
         events

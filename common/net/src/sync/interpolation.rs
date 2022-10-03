@@ -56,9 +56,9 @@ impl<T: 'static + Send + Sync> Component for InterpBuffer<T> {
 }
 
 // 0 is pure physics, 1 is pure extrapolation
-const PHYSICS_VS_EXTRAPOLATION_FACTOR: f32 = 0.1;
-const POSITION_INTERP_SANITY: Option<f32> = None;
-const VELOCITY_INTERP_SANITY: Option<f32> = None;
+const PHYSICS_VS_EXTRAPOLATION_FACTOR: f64 = 0.1;
+const POSITION_INTERP_SANITY: Option<f64> = None;
+const VELOCITY_INTERP_SANITY: Option<f64> = None;
 const ENABLE_POSITION_HERMITE: bool = false;
 
 impl InterpolatableComponent for Pos {
@@ -91,11 +91,11 @@ impl InterpolatableComponent for Pos {
         let mut out = if ENABLE_POSITION_HERMITE
             && ((t0 - t0prime).abs() < f64::EPSILON && (t1 - t1prime).abs() < f64::EPSILON)
         {
-            let h00 = |t: f64| (2.0 * t.powf(3.0) - 3.0 * t.powf(2.0) + 1.0) as f32;
-            let h10 = |t: f64| (t.powf(3.0) - 2.0 * t.powf(2.0) + t) as f32;
-            let h01 = |t: f64| (-2.0 * t.powf(3.0) + 3.0 * t.powf(2.0)) as f32;
-            let h11 = |t: f64| (t.powf(3.0) - t.powf(2.0)) as f32;
-            let dt = (t1 - t0) as f32;
+            let h00 = |t: f64| (2.0 * t.powf(3.0) - 3.0 * t.powf(2.0) + 1.0);
+            let h10 = |t: f64| (t.powf(3.0) - 2.0 * t.powf(2.0) + t);
+            let h01 = |t: f64| (-2.0 * t.powf(3.0) + 3.0 * t.powf(2.0));
+            let h11 = |t: f64| (t.powf(3.0) - t.powf(2.0));
+            let dt = t1 - t0;
             h00(t) * p0.0 + h10(t) * dt * m0.0 + h01(t) * p1.0 + h11(t) * dt * m1.0
         } else {
             if ENABLE_POSITION_HERMITE {
@@ -104,7 +104,7 @@ impl InterpolatableComponent for Pos {
                     interp_data, vel
                 );
             }
-            Lerp::lerp_unclamped(p0.0, p1.0, t as f32)
+            Lerp::lerp_unclamped(p0.0, p1.0, t as f64)
         };
 
         if out.map(|x| x.is_nan()).reduce_or() {
@@ -139,7 +139,7 @@ impl InterpolatableComponent for Vel {
             warn!("velocity delta exceeded sanity check, clamping");
             return p1;
         }
-        let lerp_factor = 1.0 + ((t2 - t1) / (t1 - t0)) as f32;
+        let lerp_factor = 1.0 + ((t2 - t1) / (t1 - t0));
         let mut out = Lerp::lerp_unclamped(p0.0, p1.0, lerp_factor);
         if out.map(|x| x.is_nan()).reduce_or() {
             warn!(

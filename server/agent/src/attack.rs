@@ -17,7 +17,7 @@ use common::{
     vol::ReadVol,
 };
 use rand::Rng;
-use std::{f32::consts::PI, time::Duration};
+use std::{f64::consts::PI, time::Duration};
 use vek::*;
 
 impl<'a> AgentData<'a> {
@@ -45,7 +45,7 @@ impl<'a> AgentData<'a> {
                 None,
             );
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.02
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -136,7 +136,7 @@ impl<'a> AgentData<'a> {
         };
 
         let elevation = self.pos.0.z - tgt_data.pos.0.z;
-        const PREF_DIST: f32 = 30_f32;
+        const PREF_DIST: f64 = 30_f64;
         if attack_data.angle_xy < 30.0
             && (elevation > 10.0 || attack_data.dist_sqrd > PREF_DIST.powi(2))
             && line_of_sight_with_target()
@@ -244,7 +244,7 @@ impl<'a> AgentData<'a> {
                 None,
             );
 
-            if attack_data.dist_sqrd < 32.0f32.powi(2)
+            if attack_data.dist_sqrd < 32.0f64.powi(2)
                 && has_leap()
                 && has_energy(50.0)
                 && entities_have_line_of_sight(
@@ -258,7 +258,7 @@ impl<'a> AgentData<'a> {
                 use_leap(controller);
             }
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.02
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -311,7 +311,7 @@ impl<'a> AgentData<'a> {
                 None,
             );
 
-            if attack_data.dist_sqrd < 32.0f32.powi(2)
+            if attack_data.dist_sqrd < 32.0f64.powi(2)
                 && has_leap()
                 && has_energy(50.0)
                 && entities_have_line_of_sight(
@@ -325,7 +325,7 @@ impl<'a> AgentData<'a> {
                 use_leap(controller);
             }
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.02
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -381,7 +381,7 @@ impl<'a> AgentData<'a> {
                 }
             }
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.02
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -407,8 +407,8 @@ impl<'a> AgentData<'a> {
         read_data: &ReadData,
         rng: &mut impl Rng,
     ) {
-        const MIN_CHARGE_FRAC: f32 = 0.5;
-        const OPTIMAL_TARGET_VELOCITY: f32 = 5.0;
+        const MIN_CHARGE_FRAC: f64 = 0.5;
+        const OPTIMAL_TARGET_VELOCITY: f64 = 5.0;
         const DESIRED_ENERGY_LEVEL: f32 = 50.0;
 
         let line_of_sight_with_target = || {
@@ -425,7 +425,7 @@ impl<'a> AgentData<'a> {
                     .map(|t| t.target)
                     .and_then(|e| read_data.velocities.get(e))
                     .map_or(0.0, |v| v.0.magnitude_squared());
-                if c.charge_frac() < MIN_CHARGE_FRAC
+                if c.charge_frac() < MIN_CHARGE_FRAC as f64
                     || (target_speed_sqd > OPTIMAL_TARGET_VELOCITY.powi(2) && c.charge_frac() < 1.0)
                 {
                     // If haven't charged to desired level, or target is moving too fast and haven't
@@ -529,7 +529,7 @@ impl<'a> AgentData<'a> {
             }
             // Sometimes try to roll
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.01
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -567,8 +567,8 @@ impl<'a> AgentData<'a> {
             extract_ability(AbilityInput::Auxiliary(0)),
         );
         let flamethrower_range = match flamethrower {
-            CharacterAbility::BasicBeam { range, .. } => range,
-            _ => 20.0_f32,
+            CharacterAbility::BasicBeam { range, .. } => range as f64,
+            _ => 20.0_f64,
         };
         let shockwave_cost = shockwave.get_energy_cost();
         if self.body.map_or(false, |b| b.is_humanoid())
@@ -668,7 +668,7 @@ impl<'a> AgentData<'a> {
             }
             // Sometimes try to roll
             if self.body.map_or(false, |b| b.is_humanoid())
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && !matches!(self.char_state, CharacterState::Shockwave(_))
                 && rng.gen::<f32>() < 0.02
             {
@@ -801,7 +801,7 @@ impl<'a> AgentData<'a> {
             // Sometimes try to roll
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
                 && !matches!(self.char_state, CharacterState::BasicAura(_))
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.01
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -895,7 +895,7 @@ impl<'a> AgentData<'a> {
                 controller.push_basic_input(InputKind::Primary);
                 controller.inputs.move_dir = Vec2::zero();
             }
-        } else if attack_data.dist_sqrd < (radius as f32 + attack_data.min_attack_dist).powi(2) {
+        } else if attack_data.dist_sqrd < (radius as f64 + attack_data.min_attack_dist).powi(2) {
             // if in range to charge, circle, then charge
             if agent.action_state.int_counter == 0 {
                 // if you haven't chosen a direction to go in, choose now
@@ -1407,7 +1407,7 @@ impl<'a> AgentData<'a> {
     ) {
         controller.inputs.look_dir = Dir::new(
             Quaternion::from_xyzw(self.ori.look_dir().x, self.ori.look_dir().y, 0.0, 0.0)
-                .rotated_z(6.0 * read_data.dt.0 as f32)
+                .rotated_z(6.0 * read_data.dt.0 as f64)
                 .into_vec3()
                 .try_normalized()
                 .unwrap_or_default(),
@@ -1433,7 +1433,7 @@ impl<'a> AgentData<'a> {
         read_data: &ReadData,
         rng: &mut impl Rng,
     ) {
-        const MINDFLAYER_ATTACK_DIST: f32 = 16.0;
+        const MINDFLAYER_ATTACK_DIST: f64 = 16.0;
         const MINION_SUMMON_THRESHOLD: f32 = 0.20;
         let health_fraction = self.health.map_or(0.5, |h| h.fraction());
         // Sets counter at start of combat, using `condition` to keep track of whether
@@ -1544,7 +1544,7 @@ impl<'a> AgentData<'a> {
         read_data: &ReadData,
         rng: &mut impl Rng,
     ) {
-        if attack_data.dist_sqrd > 30.0_f32.powi(2) {
+        if attack_data.dist_sqrd > 30.0_f64.powi(2) {
             let small_chance = rng.gen_bool(0.05);
 
             if small_chance
@@ -1673,7 +1673,7 @@ impl<'a> AgentData<'a> {
     ) {
         // Set fly to false
         controller.push_cancel_input(InputKind::Fly);
-        if attack_data.dist_sqrd > 30.0_f32.powi(2) {
+        if attack_data.dist_sqrd > 30.0_f64.powi(2) {
             if rng.gen_bool(0.05)
                 && entities_have_line_of_sight(
                     self.pos,
@@ -1794,8 +1794,8 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const BIRD_ATTACK_RANGE: f32 = 4.0;
-        const BIRD_CHARGE_DISTANCE: f32 = 15.0;
+        const BIRD_ATTACK_RANGE: f64 = 4.0;
+        const BIRD_CHARGE_DISTANCE: f64 = 15.0;
         let bird_attack_distance = self.body.map_or(0.0, |b| b.max_radius()) + BIRD_ATTACK_RANGE;
         // Increase action timer
         agent.action_state.timer += read_data.dt.0;
@@ -2033,8 +2033,8 @@ impl<'a> AgentData<'a> {
         read_data: &ReadData,
     ) {
         const MINOTAUR_FRENZY_THRESHOLD: f32 = 0.5;
-        const MINOTAUR_ATTACK_RANGE: f32 = 5.0;
-        const MINOTAUR_CHARGE_DISTANCE: f32 = 15.0;
+        const MINOTAUR_ATTACK_RANGE: f64 = 5.0;
+        const MINOTAUR_CHARGE_DISTANCE: f64 = 15.0;
         let minotaur_attack_distance =
             self.body.map_or(0.0, |b| b.max_radius()) + MINOTAUR_ATTACK_RANGE;
         let health_fraction = self.health.map_or(1.0, |h| h.fraction());
@@ -2094,10 +2094,10 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const GOLEM_MELEE_RANGE: f32 = 4.0;
-        const GOLEM_LASER_RANGE: f32 = 30.0;
-        const GOLEM_LONG_RANGE: f32 = 50.0;
-        const GOLEM_TARGET_SPEED: f32 = 8.0;
+        const GOLEM_MELEE_RANGE: f64 = 4.0;
+        const GOLEM_LASER_RANGE: f64 = 30.0;
+        const GOLEM_LONG_RANGE: f64 = 50.0;
+        const GOLEM_TARGET_SPEED: f64 = 8.0;
         let golem_melee_range = self.body.map_or(0.0, |b| b.max_radius()) + GOLEM_MELEE_RANGE;
         // Fraction of health, used for activation of shockwave
         // If golem don't have health for some reason, assume it's full
@@ -2169,8 +2169,8 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const SCUTTLE_RANGE: f32 = 40.0;
-        const BUBBLE_RANGE: f32 = 20.0;
+        const SCUTTLE_RANGE: f64 = 40.0;
+        const BUBBLE_RANGE: f64 = 20.0;
         const MINION_SUMMON_THRESHOLD: f32 = 0.20;
         let health_fraction = self.health.map_or(0.5, |h| h.fraction());
         let line_of_sight_with_target = || {
@@ -2236,10 +2236,10 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const ICE_SPIKES_RANGE: f32 = 15.0;
-        const ICE_BREATH_RANGE: f32 = 10.0;
+        const ICE_SPIKES_RANGE: f64 = 15.0;
+        const ICE_BREATH_RANGE: f64 = 10.0;
         const ICE_BREATH_TIMER: f32 = 10.0;
-        const SNOWBALL_MAX_RANGE: f32 = 50.0;
+        const SNOWBALL_MAX_RANGE: f64 = 50.0;
 
         agent.action_state.counter += read_data.dt.0;
 
@@ -2291,8 +2291,8 @@ impl<'a> AgentData<'a> {
         read_data: &ReadData,
     ) {
         const VINE_CREATION_THRESHOLD: f32 = 0.50;
-        const FIRE_BREATH_RANGE: f32 = 20.0;
-        const MAX_PUMPKIN_RANGE: f32 = 50.0;
+        const FIRE_BREATH_RANGE: f64 = 20.0;
+        const MAX_PUMPKIN_RANGE: f64 = 50.0;
         let health_fraction = self.health.map_or(0.5, |h| h.fraction());
         let line_of_sight_with_target = || {
             entities_have_line_of_sight(self.pos, self.body, tgt_data.pos, tgt_data.body, read_data)
@@ -2475,7 +2475,7 @@ impl<'a> AgentData<'a> {
             // Sometimes try to roll
             if self.body.map(|b| b.is_humanoid()).unwrap_or(false)
                 && !matches!(self.char_state, CharacterState::BasicAura(_))
-                && attack_data.dist_sqrd < 16.0f32.powi(2)
+                && attack_data.dist_sqrd < 16.0f64.powi(2)
                 && rng.gen::<f32>() < 0.01
             {
                 controller.push_basic_input(InputKind::Roll);
@@ -2542,7 +2542,7 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const BEAM_RANGE: f32 = 20.0;
+        const BEAM_RANGE: f64 = 20.0;
         const BEAM_TIME: Duration = Duration::from_secs(3);
         // action_state.condition controls whether or not deadwood should beam or dash
         if matches!(self.char_state, CharacterState::DashMelee(s) if s.stage_section != StageSection::Recover)
@@ -2590,7 +2590,7 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const SCREAM_RANGE: f32 = 10.0;
+        const SCREAM_RANGE: f64 = 10.0;
 
         if !agent.action_state.initialized {
             agent.action_state.counter = self.health.map_or(0.0, |h| h.maximum());
@@ -2646,7 +2646,7 @@ impl<'a> AgentData<'a> {
         tgt_data: &TargetData,
         read_data: &ReadData,
     ) {
-        const SHOCKWAVE_RANGE: f32 = 25.0;
+        const SHOCKWAVE_RANGE: f64 = 25.0;
         const SHOCKWAVE_WAIT_TIME: f32 = 7.5;
         const SPIN_WAIT_TIME: f32 = 3.0;
 

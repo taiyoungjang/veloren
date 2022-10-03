@@ -54,9 +54,9 @@ pub struct RtSimController {
     /// When this field is `Some(..)`, the agent should attempt to make progress
     /// toward the given location, accounting for obstacles and other
     /// high-priority situations like being attacked.
-    pub travel_to: Option<(Vec3<f32>, String)>,
+    pub travel_to: Option<(Vec3<f64>, String)>,
     /// Proportion of full speed to move
-    pub speed_factor: f32,
+    pub speed_factor: f64,
     /// Events
     pub events: Vec<RtSimEvent>,
 }
@@ -74,7 +74,7 @@ impl Default for RtSimController {
 impl RtSimController {
     pub fn reset(&mut self) { *self = Self::default(); }
 
-    pub fn with_destination(pos: Vec3<f32>) -> Self {
+    pub fn with_destination(pos: Vec3<f64>) -> Self {
         Self {
             travel_to: Some((pos, format!("{:0.1?}", pos))),
             speed_factor: 0.25,
