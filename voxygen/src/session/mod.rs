@@ -208,9 +208,9 @@ impl SessionState {
             let top = ori.up().to_vec();
             // converting from veloren z = height axis, to mumble y = height axis
             let player_pos = mumble_link::Position {
-                position: [pos.x, pos.z, pos.y],
-                front: [front.x, front.z, front.y],
-                top: [top.x, top.z, top.y],
+                position: [pos.x as f32, pos.z as f32, pos.y as f32],
+                front: [front.x as f32, front.z as f32, front.y as f32],
+                top: [top.x as f32, top.z as f32, top.y as f32],
             };
             self.mumble_link.update(player_pos, player_pos);
         }
